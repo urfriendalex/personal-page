@@ -1,0 +1,15 @@
+.loader {
+  background: #fff;
+  height: 100vh;
+  width: 100%;
+  position: absolute;
+
+  &.loader-first {
+    z-index: 1000;
+    background-color: theme-color('success');
+  }
+  &.loader-second {
+    z-index: 1001;
+    background-color: theme-color('info');
+  }
+}

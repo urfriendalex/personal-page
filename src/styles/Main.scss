@@ -1,0 +1,43 @@
+.landing {
+
+  main {
+    visibility: hidden;
+
+    .section-wrapper {
+      @include fullScreen;
+      position: relative;
+
+      .section-title {
+        height: 20vh;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: flex-end;
+
+        .section-back-subtitle{
+          position: absolute;
+          width: 800%;
+          left: -53px;
+          content: attr(data-descr);
+          font-family: Roboto;
+          font-style: italic;
+          font-weight: bold;
+          pointer-events: none;
+          @include whitStrokeTxt;
+        }
+        .section-back-subtitle:nth-of-type(2){
+          left: -63px;
+        }
+
+        .section-subtitle {
+          overflow: hidden;
+          margin-bottom: 2%;
+          text-align: end;
+          overflow: hidden;
+          margin-right: 10%;
+        }
+      }
+      
+    }
+  }
+}

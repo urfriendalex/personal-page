@@ -6,9 +6,16 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
+    "bootstrap": "^4.5.0",
+    "gl-react": "^4.0.1",
+    "gl-react-dom": "^4.0.1",
+    "gsap": "^3.3.1",
+    "node-sass": "^4.14.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1"
+    "react-gsap": "^2.2.1",
+    "react-scripts": "3.4.1",
+    "react-use": "^15.3.2"
   },
   "scripts": {
     "start": "react-scripts start",

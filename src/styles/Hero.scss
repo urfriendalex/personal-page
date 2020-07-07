@@ -1,0 +1,70 @@
+.landing {
+  .logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .hero {
+    visibility: hidden;
+    z-index: 1;
+    height: 120vh;
+    width: 100%;
+    padding-top: 10vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    h1 {
+      font-family: 'Roboto Mono';
+      font-style: normal;
+      font-weight: lighter;
+    }
+
+    div {
+      font-size: 2rem;
+      font-family: Roboto Mono;
+      font-style: italic;
+      font-weight: normal;
+    }
+
+    .location {
+      h2 {
+        width: 25%;
+        text-align: right;
+        padding-right: 1%;
+        background-size: 100% 200%;
+        background-position: 0% 40%;
+        background-image: linear-gradient(
+          to top,
+          theme-color('success') 50%,
+          transparent 50%
+        );
+        -webkit-transition: background-position 0.4s;
+        -moz-transition: background-position 0.4s;
+        transition: background-position 0.4s;
+      }
+      h2:hover {
+        background-position: 0 90%;
+      }
+    }
+    .job {
+      h2 {
+        text-align: right;
+        height: 50%;
+        color: theme-color('success');
+      }
+      span {
+        border-left: 1px solid;
+        border-bottom: 1px solid;
+        border-color: theme-color('success');
+        margin-top: -50px;
+        width: 25px;
+        height: 25px;
+        transform: rotate(-45deg);
+      }
+    }
+  }
+}
