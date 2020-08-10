@@ -20,6 +20,7 @@ $theme-colors: (
 }
 
 @mixin whitStrokeTxt {
+  font-family: 'Roboto', sans-serif;
   font-size: 220px;
   line-height: 281px;
   color: transparent;
@@ -53,11 +54,15 @@ body {
 }
 @import './Cursor.scss';
 @import './Loader.scss';
+@import './Hero.scss';
+@import './Main.scss';
+@import './Nav.scss';
+
 
 .landing {
   background: theme-color('dark');
 
-  .works {
+  main .works {
     background: linear-gradient(
       179.97deg,
       #262626 8.93%,
@@ -81,7 +86,3 @@ body {
     background: #fff;
   }
 }
-
-@import './Hero.scss';
-@import './Main.scss';
-@import './Nav.scss';

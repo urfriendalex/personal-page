@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap, Power2 } from 'gsap/all';
+import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { Tween, Timeline } from 'react-gsap';
 import {useIntersection} from 'react-use';
 // import pic from '../img/pic.jpg';
@@ -7,6 +8,7 @@ import {useIntersection} from 'react-use';
 const Landing = () => {
   const tl = gsap.timeline();
 
+  gsap.registerPlugin(ScrollTrigger)
 
   const [navActive, setNavActive] = useState(false);
   const [loadedBefore, setLoadedBefore] = useState(false);
@@ -31,11 +33,11 @@ const Landing = () => {
   //   console.log(el);
   // }
 
-  const interSection = useIntersection(worksSectionRef,{
-    root: null,
-    rootMargin: '0px',
-    threshold: 1
-  });
+  // const interSection = useIntersection(worksSectionRef,{
+  //   root: null,
+  //   rootMargin: '0px',
+  //   threshold: 1
+  // });
 
   const scrollLeft = element => {
     gsap.to(element, 1, {
@@ -43,15 +45,28 @@ const Landing = () => {
     })    
   };
 
-  const scrollRight = element => {
-    gsap.to(element, 1, {
-      left: '1000px'
-    })    
-  };
+  // const scrollRight = element => {
 
-  interSection && interSection.intersectionRatio < 1 ?
-  scrollLeft('.works .section-back-subtitle:nth-of-type(1)')
-  : scrollRight('.works .section-back-subtitle:nth-of-type(1)')
+    const onScrollTl = gsap.timeline({
+      ScrollTrigger: {
+        trigger: '.works',
+        start: "center bottom",
+        end: "center top",
+        scrub: true,
+        markers: true
+      }
+    });
+    onScrollTl.fromTo('.works .section-back-subtitle:nth-of-type(1)', {left: '-1200px'},{left: '-63px', duration: 1})
+    onScrollTl.fromTo('.works .section-back-subtitle:nth-of-type(2)', {left: '-1400px'},{left: '-53px', duration: 1})    
+    
+  // };
+
+  // interSection && interSection.intersectionRatio < 1 ?
+  // scrollLeft('.works .section-back-subtitle:nth-of-type(1)')
+  // : scrollRight('.works .section-back-subtitle:nth-of-type(1)')
+
+  // scrollRight('.works .section-back-subtitle:nth-of-type(1)');
+
 
 
 
@@ -240,7 +255,7 @@ const Landing = () => {
                 </ul>         */}
       </nav>
       <section className='hero container'>
-          <div className="row w-100 h-25 d-flex align-items-end">
+          <div className="row w-100 d-flex align-items-end">
               <h1>Alexander Yansons</h1>
           </div>
           <div className="row w-100 h-50 d-flex align-items-center justify-content-center location">
@@ -248,7 +263,9 @@ const Landing = () => {
           </div>
           <div className="row w-100 h-25 d-flex align-items-start justify-content-center job">
             <h2 className='w-100'>Front End Developer</h2>
+            <div className='row w-100 d-flex align-items-start justify-content-center position-relative'>
               <span></span>
+            </div>
           </div>
       </section>
       <main>
