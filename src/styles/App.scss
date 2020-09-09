@@ -10,7 +10,7 @@ $theme-colors: (
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100;0,300;0,400;1,100;1,300;1,400&display=swap');
 @mixin fullScreen {
-  height: 100vh;
+  height: 100%;
 }
 
 @mixin flexCenter {
@@ -30,7 +30,7 @@ $theme-colors: (
   color: transparent;
 }
 
-body {
+body, html {
   height: 100%;
   background-color: #fff;
   color: #fff;

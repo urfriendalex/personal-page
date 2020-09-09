@@ -1,6 +1,9 @@
 .landing {
 
+  height: 100%;
+
   main {
+    height: 100%;
     visibility: hidden;
 
     .section-wrapper {
@@ -26,6 +29,7 @@
           @include whitStrokeTxt;
         }
         .section-back-subtitle:nth-of-type(2){
+          top: -5.5rem;
           left: -63px;
         }
 

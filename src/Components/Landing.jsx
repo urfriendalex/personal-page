@@ -263,8 +263,8 @@ const Landing = () => {
         </div>
         <div className='skills section-wrapper'>
           <div className='section-title'>
-            <div className='section-back-subtitle'>MY PROJECTS MY PROJECTS</div>
-            <div className='section-back-subtitle'>MY PROJECTS MY PROJECTS</div>
+            <div className='section-back-subtitle'>MY SKILLS MY SKILLS</div>
+            <div className='section-back-subtitle'>MY SKILLS MY SKILLS</div>
             <h1 className='section-subtitle'>
               MY SKILLS
             </h1>
