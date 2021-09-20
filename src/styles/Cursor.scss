@@ -1,15 +1,25 @@
 #cursor {
-  width: 3rem;
-  height: 3rem;
-  border: 0.5px solid white;
-  border-radius: 50%;
-  position: absolute;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  // top: 25%;
-  // left: 77%;
-  transition: all ease-in-out;
-  transform-origin: 150% 150%;
-  z-index: 2500;
-  visibility: hidden;
+    width: 3rem;
+    height: 3rem;
+    border: 0.5px solid theme-color(max-light);
+    border-radius: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    top: 50%;
+    left: -10%;
+    transition: all ease-out;
+    transform-origin: 150% 150%;
+    z-index: 2500;
+    transition: all 0.05s ease-in-out;
+
+    @include media('<=tablet') {
+        display: none;
+    }
+}
+
+.light {
+    #cursor {
+        border: 0.5px solid theme-color(dark);
+    }
 }

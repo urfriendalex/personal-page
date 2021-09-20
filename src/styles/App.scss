@@ -1,88 +1,120 @@
 $theme-colors: (
-  'success': #9db5b2,
-  'danger': #fadd41,
-  'info': #626262,
-  'dark': #2d2d2a,
-  'grey': #262626,
+    'success': #c2e812,
+    'danger': #f0b042,
+    'info': #1818c9,
+    'dark': #060606,
+    'grey': #262626,
+    'light-grey': #e8e8f1,
+    'max-light': #ffffff,
+    'light': #f7f7ff,
 );
 
-@import '~bootstrap/scss/bootstrap.scss';
+@import '../fonts/satoshi/css/satoshi.css';
+// @import '../fonts/maragsa/css/maragsa.css';
 
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100;0,300;0,400;1,100;1,300;1,400&display=swap');
+@import '~bootstrap/scss/bootstrap.scss';
+@import './shared.scss';
+
 @mixin fullScreen {
-  height: 100%;
+    height: 100vh;
 }
 
 @mixin flexCenter {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 @mixin whitStrokeTxt {
-  font-family: 'Roboto', sans-serif;
-  font-size: 220px;
-  line-height: 281px;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
-  text-stroke: 2px rgba(255, 255, 255, 0.5);
-  -webkit-text-fill-color: transparent;
-  text-fill-color: transparent;
-  color: transparent;
+    font-size: 220px;
+    line-height: 281px;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+    text-stroke: 2px rgba(255, 255, 255, 0.5);
+    -webkit-text-fill-color: transparent;
+    text-fill-color: transparent;
+    color: transparent;
 }
 
-body, html {
-  height: 100%;
-  background-color: #fff;
-  color: #fff;
-  margin: 0;
-  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Oxygen', 'Ubuntu',
-    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+::-moz-selection {
+    /* Code for Firefox */
+    color: theme-color(light);
+    background: theme-color(info);
+}
+
+::selection {
+    color: theme-color(light);
+    background: theme-color(info);
+}
+
+body,
+html {
+    padding: 0;
+    margin: 0;
+    font-family: 'Satoshi-Regular';
+    -webkit-font-smoothing: subpixel-antialiased;
+    color: theme-color(max-light);
+}
+
+html {
+    height: 100%;
+    overflow-x: hidden;
+}
+body {
+    min-height: 100%;
+    background: theme-color(dark);
 }
 
 #root {
-  height: 100%;
-  overflow-x: hidden;
+    height: 100%;
+    min-height: 100%;
+    overflow-y: scroll;
+}
+html {
+    @include media('<=phone') {
+        font-size: 40%;
+    }
+    // if the breakpoint is greater than 360px and less than or eqaul to 425px
+    @include media('>phone', '<=425px') {
+        font-size: 45%;
+    }
+
+    // if the screen is going to be greater than 425px and less than or eqaul to 768px
+    @include media('>425px', '<=tablet') {
+        font-size: 55%;
+    }
+
+    // if the screen is going to be greater than 768px and less than 1366px
+    @include media('>tablet', '<desktop') {
+        font-size: 80%;
+    }
+    // if the screen is going to be greater than or equal to 1366px
+    @include media('>=desktop') {
+        font-size: 90%;
+    }
+    // if the screen is going to be greater than or equal to 1920px
+    @include media('>=LGdesktop', 'retina2x') {
+        font-size: 100%;
+    }
 }
 
 .App {
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
 }
+
 @import './Cursor.scss';
+@import './Header.scss';
 @import './Loader.scss';
 @import './Hero.scss';
 @import './Main.scss';
-@import './Nav.scss';
-
+@import './Projects.scss';
+@import './Contact.scss';
+@import './Navigation.scss';
 
 .landing {
-  background: theme-color('dark');
-
-  main .works {
-    background: linear-gradient(
-      179.97deg,
-      #262626 8.93%,
-      #262626 8.94%,
-      #454545 99.95%
-    );
-    height: 120vh;
-  }
-
-  .skills {
-    background: linear-gradient(
-      180.09deg,
-      #454545 4.85%,
-      rgba(113, 124, 122, 0.932813) 34.54%,
-      rgba(157, 181, 178, 0.85) 99.87%
-    );
-  }
-
-  .contact {
-    @include fullScreen;
-    background: #fff;
-  }
+    min-height: 100vh;
+    overflow: hidden;
 }

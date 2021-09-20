@@ -1,0 +1,283 @@
+#contact {
+    height: 360vh;
+    position: relative;
+    transition: background 0.5s 0.5s ease-in-out;
+
+    &::after {
+        content: '';
+        background-image: url('../img/noise02.png');
+        position: absolute;
+        margin-top: -5vh;
+        height: 375vh;
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-repeat: round;
+        opacity: 0;
+        z-index: 0;
+        transition: opacity 0s 0.5s ease-in-out;
+    }
+
+    .background-holder {
+        opacity: 0;
+        visibility: visible;
+        background-image: url('../img/mesh-btm-01.png');
+        background-repeat: no-repeat;
+        background-size: 100% 120%;
+        background-position: bottom 4%;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 100vh;
+        width: 100%;
+        z-index: 0;
+        overflow: hidden;
+        transition: opacity 0.2s ease-in-out;
+
+        &.bg-1 {
+            background-image: url('../img/mesh-btm-01.png');
+        }
+        &.bg-2 {
+            background-image: url('../img/mesh-btm-02.png');
+        }
+        &.bg-3 {
+            background-image: url('../img/mesh-btm-03.png');
+        }
+    }
+
+    &.scrolled {
+        background: theme-color(light) !important;
+        transition: background 0.2s ease-in-out;
+
+        &::after {
+            opacity: 0.2;
+            transition: opacity 0s ease-in-out;
+        }
+
+        .background-holder {
+            opacity: 1;
+            transition: opacity 0.2s 0.2s ease-in-out,
+                background-image 1s ease-in-out;
+        }
+
+        .section-title {
+            .line span {
+                -webkit-text-fill-color: transparent;
+                text-fill-color: transparent;
+                text-stroke: 2px transparent;
+                -webkit-text-stroke: 2px transparent;
+            }
+            &:nth-of-type(1) {
+                .line {
+                    span {
+                        -webkit-text-stroke: 2px
+                            rgba(theme-color(light-grey), 20%);
+                        text-stroke: 2px rgba(theme-color(light-grey), 20%);
+                        -webkit-text-fill-color: transparent;
+                        text-fill-color: transparent;
+                    }
+                }
+            }
+        }
+
+        #contact-details-scroll {
+            opacity: 1;
+            visibility: visible;
+            transition: 0.3s 0.5s opacity ease-in-out,
+                0s 0.5s visibility ease-in-out;
+        }
+    }
+
+    #contact-details-scroll {
+        position: absolute;
+        top: 285vh;
+        opacity: 0;
+        height: 100vh;
+        width: 100%;
+        visibility: hidden;
+        z-index: 1;
+        transition: 0.3s opacity ease-in-out, 0s 0.3s visibility ease-in-out;
+
+        .contact-details-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 90%;
+            margin: 0 auto;
+            .text {
+                font-size: 7rem;
+                display: flex;
+                flex-direction: column;
+                span {
+                    &:nth-of-type(1) {
+                        margin-left: 5%;
+                    }
+                    &:nth-of-type(2) {
+                        margin-left: 20%;
+                        position: relative;
+                        width: fit-content;
+                    }
+                }
+                .smileyFace {
+                    position: absolute;
+                    top: -75%;
+                    right: -10%;
+                    height: 10rem;
+                    width: 10rem;
+                    background-color: transparent;
+                    border-radius: 50%;
+                    border: theme-color(dark) solid 5px;
+                    z-index: -1;
+
+                    .left-eye {
+                        position: absolute;
+                        top: 20%;
+                        left: 35%;
+                        height: 3rem;
+                        width: 5px;
+                        background-color: theme-color(dark);
+                        z-index: 2;
+                    }
+
+                    .right-eye {
+                        position: absolute;
+                        top: 20%;
+                        right: 35%;
+                        height: 3rem;
+                        width: 5px;
+                        background-color: theme-color(dark);
+                        z-index: 2;
+                    }
+
+                    .mouth {
+                        position: absolute;
+                        top: 10%;
+                        left: 8%;
+                        height: 7rem;
+                        width: 8rem;
+                        border-width: 5px;
+                        border-style: solid;
+                        border-color: transparent;
+                        background-color: transparent;
+                        border-bottom-color: theme-color(dark);
+                        border-bottom-style: solid;
+                        border-bottom-width: 5px;
+                        border-radius: 0% 0% 50% 50%;
+                        z-index: 2;
+                    }
+                }
+            }
+            a.mail-link {
+                font-style: italic;
+                font-size: 5rem;
+                font-weight: 600;
+                color: theme-color(dark);
+
+                &:hover {
+                    -webkit-text-fill-color: transparent;
+                    text-fill-color: transparent;
+                    -webkit-text-stroke: 1px theme-color(dark);
+                    text-stroke: 1px theme-color(dark);
+                }
+            }
+
+            .social-links-container {
+                margin-left: auto;
+                margin-right: 4rem;
+                .text {
+                    font-size: 4rem;
+                    font-family: seif;
+                }
+                .social-links-list {
+                    text-align: right;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-end;
+                    .a {
+                        width: fit-content;
+                        color: theme-color(dark);
+                    }
+                }
+            }
+        }
+
+        .bg-changer {
+            position: absolute;
+            right: 3%;
+            top: 70vh;
+            .btn {
+                background: transparent;
+                border: none;
+                transition: 0.3s all ease-in-out;
+                color: theme-color(light);
+            }
+        }
+    }
+
+    .section-title {
+        margin-top: -10vh;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        position: absolute;
+        z-index: 1;
+
+        .line {
+            display: flex;
+            position: absolute;
+            top: 0vh;
+            margin-left: -5vw;
+
+            span {
+                font-size: 15rem;
+                line-height: 13rem;
+                font-family: seif;
+                -webkit-text-stroke: 2px theme-color(max-light);
+                text-stroke: 2px theme-color(max-light);
+                -webkit-text-fill-color: transparent;
+                text-fill-color: transparent;
+                transition: all 0.5s ease-in-out;
+
+                &.second-word {
+                    margin: 0 3rem 0rem 2rem;
+                }
+            }
+        }
+
+        &:nth-of-type(1) {
+            height: 360vh;
+            top: 0;
+            .line {
+                top: 0vh;
+            }
+        }
+        &:nth-of-type(2) {
+            height: 350vh;
+            top: 50vh;
+            .line {
+                top: 20vh;
+            }
+        }
+        &:nth-of-type(3) {
+            height: 300vh;
+            top: 100vh;
+            .line {
+                top: 40vh;
+            }
+        }
+        &:nth-of-type(4) {
+            height: 250vh;
+            top: 150vh;
+            .line {
+                top: 60vh;
+            }
+        }
+        &:nth-of-type(5) {
+            height: 300vh;
+            top: 200vh;
+            .line {
+                top: 80vh;
+            }
+        }
+    }
+}

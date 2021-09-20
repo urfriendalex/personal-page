@@ -1,71 +1,139 @@
-.landing {
-  .logo {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  .hero {
-    visibility: hidden;
+.hero {
     z-index: 1;
+    min-height: 100vh;
     height: 100%;
     width: 100%;
-    padding-top: 10vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    position: relative;
 
-    h1 {
-      font-family: 'Roboto Mono';
-      font-style: normal;
-      font-weight: lighter;
+    .background-container {
+        background-image: url('../img/mesh02.png');
+        background-repeat: no-repeat;
+        background-size: 200% 200%;
+        background-attachment: fixed;
+        background-size: 100% 120%;
+        background-attachment: fixed;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100%;
+        z-index: -1;
+        overflow: hidden;
+        transition: all 1s ease-in-out;
+
+        &.bg-1 {
+            background-image: url('../img/mesh01.png');
+        }
+        &.bg-2 {
+            background-image: url('../img/mesh02.png');
+        }
+        &.bg-3 {
+            background-image: url('../img/mesh03.png');
+        }
+
+        &::after {
+            content: '';
+            background-image: url('../img/noise02.png');
+            position: absolute;
+            height: 110vh;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-repeat: round;
+            opacity: 0.3;
+            background-attachment: fixed;
+        }
+
+        @keyframes bgChange {
+            0%,
+            100% {
+                background-image: url('../img/mesh01.png');
+            }
+            25% {
+                background-image: url('../img/mesh02.png');
+            }
+            75% {
+                background-image: url('../img/mesh03.png');
+            }
+        }
     }
 
-    div {
-      font-size: 2rem;
-      font-family: Roboto Mono;
-      font-style: italic;
-      font-weight: normal;
-    }
+    .hero-text-wrapper {
+        width: 95%;
+        height: 90%;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        padding: 2% 10%;
 
-    .location {
-      h2 {
-        width: 25%;
-        text-align: right;
-        padding-right: 1%;
-        background-size: 100% 200%;
-        background-position: 0% 40%;
-        background-image: linear-gradient(
-          to top,
-          theme-color('success') 50%,
-          transparent 50%
-        );
-        -webkit-transition: background-position 0.4s;
-        -moz-transition: background-position 0.4s;
-        transition: background-position 0.4s;
-      }
-      h2:hover {
-        background-position: 0 90%;
-      }
+        .text {
+            font-size: 4rem;
+            font-family: seif;
+            // position: relative;
+            text-align: center;
+            height: 6rem;
+        }
+
+        .text-1 {
+            span {
+                margin-left: -45%;
+            }
+        }
+        .text-2 {
+            letter-spacing: 0.2rem;
+        }
+        .text-inbetween {
+            font-size: 4rem;
+            height: 5rem;
+            margin-top: -1rem;
+            margin-bottom: 1rem;
+            -webkit-text-stroke: 2px theme-color(max-light);
+            text-stroke: 2px theme-color(max-light);
+            -webkit-text-fill-color: transparent;
+            text-fill-color: transparent;
+            span {
+                margin-right: -50%;
+            }
+        }
+        .text-3 {
+            span {
+                margin-right: -50%;
+            }
+        }
+        .text-4 {
+            font-style: italic;
+            font-size: 5rem;
+            margin-left: -30%;
+        }
+        .text-3,
+        .text-2 {
+            font-family: seif;
+            font-weight: 700;
+            -webkit-text-stroke: 2px theme-color(max-light);
+            text-stroke: 2px theme-color(max-light);
+            -webkit-text-fill-color: unset;
+            text-fill-color: unset;
+            &:hover {
+                -webkit-text-fill-color: transparent;
+                text-fill-color: transparent;
+                color: transparent;
+            }
+        }
     }
-    .job {
-      h2 {
-        text-align: right;
-        height: 50%;
-        color: theme-color('success');
-      }
-      span {
-        cursor: pointer;
-        border-left: 1px solid;
-        border-bottom: 1px solid;
-        border-color: theme-color('success');
-        margin-top: -100px;
-        width: 25px;
-        height: 25px;
-        transform: rotate(-45deg);
-      }
+    .bg-changer {
+        position: absolute;
+        right: 3%;
+        top: 93%;
+        .btn {
+            background: transparent;
+            border: none;
+            transition: 0.3s all ease-in-out;
+            color: theme-color(light);
+        }
     }
-  }
 }

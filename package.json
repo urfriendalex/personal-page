@@ -1,41 +1,54 @@
 {
-  "name": "personal-page-dev",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.5.0",
-    "@testing-library/user-event": "^7.2.1",
-    "bootstrap": "^4.5.0",
-    "gl-react": "^4.0.1",
-    "gl-react-dom": "^4.0.1",
-    "gsap": "^3.3.1",
-    "node-sass": "^4.14.1",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-gsap": "^2.2.1",
-    "react-scripts": "3.4.1",
-    "react-use": "^15.3.2"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+    "name": "personal-page-dev",
+    "version": "0.1.0",
+    "private": true,
+    "dependencies": {
+        "@testing-library/jest-dom": "^4.2.4",
+        "@testing-library/react": "^9.5.0",
+        "@testing-library/user-event": "^7.2.1",
+        "bootstrap": "^4.5.0",
+        "classnames": "^2.3.1",
+        "firebase": "^9.0.2",
+        "gl-react": "^4.0.1",
+        "gl-react-dom": "^4.0.1",
+        "gsap": "^3.7.1",
+        "locomotive-scroll": "^4.1.1",
+        "node-sass": "^4.14.1",
+        "react": "^16.13.1",
+        "react-dom": "^16.13.1",
+        "react-gsap": "^2.2.1",
+        "react-redux": "^7.2.4",
+        "react-scripts": "3.4.1",
+        "react-use": "^15.3.2",
+        "redux-persist": "^6.0.0",
+        "redux-thunk": "^2.3.0"
+    },
+    "scripts": {
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test",
+        "eject": "react-scripts eject"
+    },
+    "eslintConfig": {
+        "extends": "react-app"
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    },
+    "type": "commonjs",
+    "exports": {
+        ".": "./index.js",
+        "./jsx-dev-runtime": "./jsx-dev-runtime.js",
+        "./jsx-runtime": "./jsx-runtime.js",
+        "./": "./"
+    }
 }

@@ -1,0 +1,162 @@
+.navFull {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 10%;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s 1.2s ease-in-out, visibility 0s 1.5s linear;
+    -webkit-transition: all 0.3s 1.2s ease-in-out, visibility 0s 1.5s linear;
+
+    &:after {
+        content: '';
+        background: theme-color(dark);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+    }
+
+    z-index: 1999;
+
+    &.active {
+        transition-delay: 0s;
+        opacity: 1;
+        visibility: visible;
+
+        .navItem {
+            a {
+                .main-text {
+                    span {
+                        transform: rotate3d(0, 0, 0, 90deg);
+                        visibility: visible;
+                        opacity: 1;
+                        //actual position
+                        @for $i from 1 to 10 {
+                            &:nth-child(#{10-$i}) {
+                                transition-delay: $i * 0.015s;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .navItem {
+        font-size: 6rem;
+        margin: 2rem;
+        font-weight: 400;
+        font-family: 'Maragsa Display';
+        width: 80%;
+        display: flex;
+        justify-content: left;
+        z-index: 2;
+
+        a {
+            color: transparent;
+            text-decoration: none;
+            display: flex;
+            position: relative;
+            text-transform: uppercase;
+
+            span {
+                transform-origin: center center 0.4em;
+                transition: all 0.5s cubic-bezier(0.5, 0, 0, 1);
+                -webkit-transition: all 0.5s cubic-bezier(0.5, 0, 0, 1);
+            }
+
+            .main-text {
+                display: flex;
+                -webkit-text-fill-color: transparent;
+                text-fill-color: transparent;
+                -webkit-text-stroke: 2px theme-color(light);
+                text-stroke: 2px theme-color(light);
+
+                span {
+                    padding-right: 0.1em;
+                    transform: rotate3d(1, 0.3, 0, 90deg) translateZ(-50px);
+                    //position before menu open
+                    visibility: hidden;
+                    opacity: 0;
+
+                    @for $i from 1 to 10 {
+                        &:nth-child(#{10-$i}) {
+                            transition-delay: 0.3 + $i * 0.015s;
+                        }
+                    }
+                }
+            }
+
+            .second-text {
+                display: flex;
+                font-style: italic;
+                left: 0;
+                top: 0;
+                color: theme-color(light);
+                position: absolute;
+                font-weight: 800;
+
+                span {
+                    padding-right: 0.15em;
+                    transform: rotate3d(1, 0.3, 0, -90deg);
+                    visibility: hidden;
+                    opacity: 0.3;
+                }
+            }
+
+            &:hover {
+                .main-text {
+                    span {
+                        transform: rotate3d(1, 0.3, 0, 90deg);
+                        visibility: hidden;
+                        opacity: 0.3;
+                        @for $i from 1 to 10 {
+                            &:nth-child(#{$i}) {
+                                transition-delay: $i * 0.015s;
+                            }
+                        }
+                    }
+                }
+
+                .second-text {
+                    span {
+                        transform: rotate3d(0, 0, 0, 90deg);
+                        visibility: visible;
+                        opacity: 1;
+                        @for $i from 1 to 10 {
+                            &:nth-child(#{10-$i}) {
+                                transition-delay: $i * 0.015s;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.light {
+    .navFull {
+        &:after {
+            background: theme-color(light);
+        }
+        .navItem {
+            a {
+                .main-text {
+                    -webkit-text-stroke: 2px theme-color(dark);
+                    text-stroke: 2px theme-color(dark);
+                }
+                .second-text {
+                    color: theme-color(dark);
+                }
+            }
+        }
+    }
+}
