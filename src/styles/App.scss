@@ -1,120 +1,121 @@
 $theme-colors: (
-    'success': #c2e812,
-    'danger': #f0b042,
-    'info': #1818c9,
-    'dark': #060606,
-    'grey': #262626,
-    'light-grey': #e8e8f1,
-    'max-light': #ffffff,
-    'light': #f7f7ff,
+  "success": #c2e812,
+  "danger": #f0b042,
+  "info": #1818c9,
+  "dark": #060606,
+  "grey": #262626,
+  "light-grey": #e8e8f1,
+  "max-light": #ffffff,
+  "light": #f7f7ff,
 );
 
-@import '../fonts/satoshi/css/satoshi.css';
+@import "../fonts/satoshi/css/satoshi.css";
 // @import '../fonts/maragsa/css/maragsa.css';
 
-@import '~bootstrap/scss/bootstrap.scss';
-@import './shared.scss';
+@import "~bootstrap/scss/bootstrap.scss";
+@import "./shared.scss";
 
 @mixin fullScreen {
-    height: 100vh;
+  height: 100vh;
 }
 
 @mixin flexCenter {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 @mixin whitStrokeTxt {
-    font-size: 220px;
-    line-height: 281px;
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
-    text-stroke: 2px rgba(255, 255, 255, 0.5);
-    -webkit-text-fill-color: transparent;
-    text-fill-color: transparent;
-    color: transparent;
+  font-size: 220px;
+  line-height: 281px;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+  text-stroke: 2px rgba(255, 255, 255, 0.5);
+  -webkit-text-fill-color: transparent;
+  text-fill-color: transparent;
+  color: transparent;
 }
 
 ::-moz-selection {
-    /* Code for Firefox */
-    color: theme-color(light);
-    background: theme-color(info);
+  /* Code for Firefox */
+  color: theme-color(light);
+  background: theme-color(info);
 }
 
 ::selection {
-    color: theme-color(light);
-    background: theme-color(info);
+  color: theme-color(light);
+  background: theme-color(info);
 }
 
 body,
 html {
-    padding: 0;
-    margin: 0;
-    font-family: 'Satoshi-Regular';
-    -webkit-font-smoothing: subpixel-antialiased;
-    color: theme-color(max-light);
+  padding: 0;
+  margin: 0;
+  font-family: "Satoshi-Regular";
+  -webkit-font-smoothing: subpixel-antialiased;
+  color: theme-color(max-light);
 }
 
 html {
-    height: 100%;
-    overflow-x: hidden;
+  height: 100%;
+  overflow-x: hidden;
+  font-size: calc(0.2em + 1vmin);
 }
 body {
-    min-height: 100%;
-    background: theme-color(dark);
+  min-height: 100%;
+  background: theme-color(dark);
 }
 
 #root {
-    height: 100%;
-    min-height: 100%;
-    overflow-y: scroll;
+  height: 100%;
+  min-height: 100%;
+  overflow-y: scroll;
 }
-html {
-    @include media('<=phone') {
-        font-size: 40%;
-    }
-    // if the breakpoint is greater than 360px and less than or eqaul to 425px
-    @include media('>phone', '<=425px') {
-        font-size: 45%;
-    }
+// html {
+//     @include media('<=phone') {
+//         font-size: 70%;
+//     }
+//     // if the breakpoint is greater than 360px and less than or eqaul to 425px
+//     @include media('>phone', '<=425px') {
+//         font-size: 75%;
+//     }
 
-    // if the screen is going to be greater than 425px and less than or eqaul to 768px
-    @include media('>425px', '<=tablet') {
-        font-size: 55%;
-    }
+//     // if the screen is going to be greater than 425px and less than or eqaul to 768px
+//     @include media('>425px', '<=tablet') {
+//         font-size: 85%;
+//     }
 
-    // if the screen is going to be greater than 768px and less than 1366px
-    @include media('>tablet', '<desktop') {
-        font-size: 80%;
-    }
-    // if the screen is going to be greater than or equal to 1366px
-    @include media('>=desktop') {
-        font-size: 90%;
-    }
-    // if the screen is going to be greater than or equal to 1920px
-    @include media('>=LGdesktop', 'retina2x') {
-        font-size: 100%;
-    }
-}
+//     // if the screen is going to be greater than 768px and less than 1366px
+//     @include media('>tablet', '<desktop') {
+//         font-size: 90%;
+//     }
+//     // if the screen is going to be greater than or equal to 1366px
+//     @include media('>=desktop') {
+//         font-size: 95%;
+//     }
+//     // if the screen is going to be greater than or equal to 1920px
+//     @include media('>=LGdesktop', 'retina2x') {
+//         font-size: 100%;
+//     }
+// }
 
 .App {
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    min-height: 100%;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
 }
 
-@import './Cursor.scss';
-@import './Header.scss';
-@import './Loader.scss';
-@import './Hero.scss';
-@import './Main.scss';
-@import './Projects.scss';
-@import './Contact.scss';
-@import './Navigation.scss';
+@import "./Cursor.scss";
+@import "./Header.scss";
+@import "./Loader.scss";
+@import "./Hero.scss";
+@import "./Main.scss";
+@import "./Projects.scss";
+@import "./Contact.scss";
+@import "./Navigation.scss";
 
 .landing {
-    min-height: 100vh;
-    overflow: hidden;
+  min-height: 100vh;
+  overflow: hidden;
 }

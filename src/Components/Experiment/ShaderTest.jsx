@@ -2,8 +2,7 @@
 import React, { Component } from "react";
 import { Shaders, Node, GLSL } from "gl-react";
 import { Surface } from "gl-react-dom";
-import pic from '../img/pic.jpg';
-
+import pic from "../img/pic.jpg";
 
 const shaders = Shaders.create({
   vignetteColorSeparationDistortion: {
@@ -36,34 +35,34 @@ void main() {
     texture2D(t, lookup(vec2(0.0), amp2)).b),
     1.0);
 }
-` }
+`,
+  },
 });
 
-
-const Vignette = ({ children: t, time, mouse }) =>
+const Vignette = ({ children: t, time, mouse }) => (
   <Node
     shader={shaders.vignetteColorSeparationDistortion}
     uniforms={{
       t,
       time: time / 1000,
       mouse,
-      freq: 10 + 2 * Math.sin(0.0007*time),
-      amp: 0.05 + Math.max(0, 0.03*Math.cos(0.001 * time)),
+      freq: 10 + 2 * Math.sin(0.0007 * time),
+      amp: 0.05 + Math.max(0, 0.03 * Math.cos(0.001 * time)),
       moving: 0,
     }}
-  />;
+  />
+);
 
-export const ExampleShader = ({ children: t }) =>
-  <Node shader={shaders.vignetteColorSeparationDistortion} uniforms={{ t }} />;
+export const ExampleShader = ({ children: t }) => (
+  <Node shader={shaders.vignetteColorSeparationDistortion} uniforms={{ t }} />
+);
 
 export default class ShaderTest extends Component {
   render() {
     return (
       <Surface width={500} height={600}>
-        <ExampleShader>
-          {pic}
-        </ExampleShader>
+        <ExampleShader>{pic}</ExampleShader>
       </Surface>
     );
   }
-};
+}

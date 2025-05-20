@@ -1,59 +1,45 @@
-import React, { useEffect, useRef, useState } from 'react';
-import './styles/App.scss';
-import Loader from './components/Loader';
-import Landing from './components/Landing';
-import useLocoScroll from './components/hooks/useLocoScroll';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useRef, useState } from "react";
+import "./styles/App.scss";
+import Loader from "./components/Loader";
+import Landing from "./components/Landing";
+import useLocoScroll from "./components/hooks/useLocoScroll";
+import { useSelector } from "react-redux";
 
-
-function App()
-{
+function App() {
   const cursor = useRef(null);
   const [isLoading, setIsloading] = useState(false);
 
-  const handleIsLoading = (status) =>
-  {
+  const handleIsLoading = status => {
     setIsloading(status);
   };
 
-  const faviconUpdate = async () =>
-  {
+  const faviconUpdate = async () => {
     const favicon = document.getElementById("favicon");
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches)
-    {
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
       favicon.href = "/favicon/dark/favicon.ico";
-    }
-    else
-    {
+    } else {
       favicon.href = "/favicon/light/favicon.ico";
     }
   };
 
-  const onMove = (e) =>
-  {
-    // cursor.current.style.transform = `translate(${e.pageX}px,${e.pageY}px)`;
+  const onMove = e => {
     cursor.current.style.left = `${e.pageX}px`;
     cursor.current.style.top = `${e.pageY}px`;
   };
 
   useLocoScroll(true);
 
-  useEffect(() =>
-  {
+  useEffect(() => {
     faviconUpdate();
-  });
+  }, []);
 
-  const isLight = useSelector((state) => state.UI.isLight);
+  const isLight = useSelector(state => state.UI.isLight);
 
-  return (<div className={`App${isLight ? ' light' : ''}`} onMouseMove={onMove}>
-    <div ref={cursor} id='cursor'></div>
-    {isLoading ? (
-      <Loader handleIsLoading={handleIsLoading} />
-    ) : (
-      <Landing />
-    )
-    }
-  </div>
+  return (
+    <div className={`App${isLight ? " light" : ""}`} onMouseMove={onMove}>
+      <div ref={cursor} id="cursor"></div>
+      {isLoading ? <Loader handleIsLoading={handleIsLoading} /> : <Landing />}
+    </div>
   );
 }
 
