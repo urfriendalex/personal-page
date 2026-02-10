@@ -9,6 +9,8 @@ import { useSelector } from "react-redux";
 gsap.registerPlugin(ScrollTrigger);
 
 const MOBILE_BP = 768;
+const getViewportHeight = () =>
+  Math.max(1, window.visualViewport?.height || window.innerHeight);
 
 const projects = [
   {
@@ -193,8 +195,9 @@ const Projects = () => {
 
     /* ======== DESKTOP – horizontal scroll ======== */
     mm.add(`(min-width: ${MOBILE_BP + 1}px)`, () => {
+      const viewportHeight = getViewportHeight();
       const scrollDistance = (projectEls.length - 1) * window.innerWidth;
-      const titleScrollPx = window.innerHeight * 0.38;
+      const titleScrollPx = viewportHeight * 0.38;
       const totalEnd = titleScrollPx + scrollDistance;
       const titleFrac = titleScrollPx / totalEnd;
 
@@ -299,17 +302,17 @@ const Projects = () => {
 
     /* ======== MOBILE – vertical scroll with snap ======== */
     mm.add(`(max-width: ${MOBILE_BP}px)`, () => {
-      const scrollDistance = (projectEls.length - 1) * window.innerHeight;
-      const titleScrollPx = window.innerHeight * 0.24;
-      // Trim a bit of the pinned range so Contact starts sooner after last project
-      const totalEnd = titleScrollPx + scrollDistance - window.innerHeight * 0.2;
+      const viewportHeight = getViewportHeight();
+      const scrollDistance = (projectEls.length - 1) * viewportHeight;
+      const titleScrollPx = viewportHeight * 0.24;
+      const totalEnd = titleScrollPx + scrollDistance;
       const titleFrac = titleScrollPx / totalEnd;
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
           pin: true,
-          scrub: 0.06,
+          scrub: 0.1,
           start: "top top",
           end: () => `+=${totalEnd}`,
           anticipatePin: 1,
@@ -350,7 +353,7 @@ const Projects = () => {
               snapStepRef.current = targetStep;
               return stepToProgress(targetStep, titleFrac, n);
             },
-            duration: { min: 0.06, max: 0.14 },
+            duration: { min: 0.12, max: 0.22 },
             delay: 0,
             ease: "power2.out",
             directional: true,

@@ -1,6 +1,6 @@
 .hero {
   z-index: 1;
-  min-height: 100dvh;
+  min-height: var(--full-vh);
   height: 100%;
   width: 100%;
   display: flex;
@@ -19,7 +19,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    height: 100dvh;
+    height: var(--full-vh);
     width: 100%;
     z-index: -1;
     overflow: hidden;

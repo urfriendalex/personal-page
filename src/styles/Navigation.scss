@@ -1,7 +1,7 @@
 .navFull {
   position: fixed;
   width: 100vw;
-  height: 100dvh;
+  height: var(--full-vh);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -19,7 +19,7 @@
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100dvh;
+    height: var(--full-vh);
     z-index: 1;
   }
 

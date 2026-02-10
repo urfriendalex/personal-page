@@ -4,14 +4,14 @@
   position: relative;
   background: var(--color-dark);
   --project-card-ratio: 1980 / 1140;
-  --project-card-width: min(60vw, calc(80vh * 1.3833333333));
+  --project-card-width: min(60vw, calc(var(--full-vh) * 0.8 * 1.3833333333));
   /* height is set dynamically via JS to create scroll space */
 
   /* Sticky inner wrapper – stays in viewport while scrolling through section */
   .projects-sticky {
     position: relative;
     width: 100%;
-    height: 100dvh;
+    height: var(--full-vh);
     overflow: hidden;
   }
 
@@ -40,7 +40,7 @@
     flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-start;
-    height: 100dvh;
+    height: var(--full-vh);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -53,7 +53,7 @@
     flex: 0 0 100vw;
     width: 100vw;
     min-width: 100vw;
-    height: 100dvh;
+    height: var(--full-vh);
     box-sizing: border-box;
     padding: 0 5vw;
     display: flex;
@@ -138,7 +138,7 @@
           display: flex;
           flex-direction: column;
           align-items: flex-start;
-          font-family: "Satoshi-Light";
+          font-family: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           flex: 1;
           min-width: 0;
 
@@ -156,7 +156,7 @@
         }
 
         .project-year {
-          font-family: "Satoshi-Light";
+          font-family: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           font-size: 0.95rem;
           line-height: 1;
           text-align: right;
@@ -242,7 +242,7 @@
 @media (max-width: 768px) {
   #projects {
     overflow: hidden;
-    --project-card-width: min(86vw, calc(44vh * 1.3833333333));
+    --project-card-width: min(86vw, calc(var(--full-vh) * 0.44 * 1.3833333333));
 
     /* Keep the title centered over the first project, like desktop */
     .projects-title {
@@ -255,15 +255,15 @@
     /* vertical stack instead of horizontal row */
     .projects-container {
       flex-direction: column;
-      height: 100dvh;
+      height: var(--full-vh);
       align-items: stretch;
     }
 
     .project-wrapper {
-      flex: 0 0 100dvh;
+      flex: 0 0 var(--full-vh);
       width: 100%;
-      height: 100dvh;
-      padding: 2rem 6vw;
+      height: var(--full-vh);
+      padding: 2rem 6vw calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
 
       .project-links {
 
@@ -306,7 +306,7 @@
     }
 
     .projects-controls {
-      bottom: 3rem;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 2rem);
       gap: 1rem;
 
       .projects-control-btn {
