@@ -1,22 +1,32 @@
-$theme-colors: (
-  "success": #c2e812,
-  "danger": #f0b042,
-  "info": #1818c9,
-  "dark": #060606,
-  "grey": #262626,
-  "light-grey": #e8e8f1,
-  "max-light": #ffffff,
-  "light": #f7f7ff,
-);
 
-@import "../fonts/satoshi/css/satoshi.css";
-// @import '../fonts/maragsa/css/maragsa.css';
+@use "sass:meta";
+@use "bootstrap/scss/bootstrap" as *;
+@use "./shared" as *;
 
-@import "~bootstrap/scss/bootstrap.scss";
-@import "./shared.scss";
+:root {
+  --color-success: #c2e812;
+  --color-danger: #f0b042;
+  --color-info: #1818c9;
+  --color-dark: #060606;
+  --color-grey: #262626;
+  --color-light-grey: #e8e8f1;
+  --color-light-grey-rgb: 232 232 241;
+  --color-max-light: #ffffff;
+  --color-light: #f7f7ff;
+  --text-stroke-width: 2px;
+}
+
+@media screen and (max-width: 768px) {
+  :root {
+    --text-stroke-width: 1px;
+  }
+}
+
+@include meta.load-css("../fonts/satoshi/css/satoshi.css");
+@include meta.load-css("../fonts/maragsa/css/maragsa.css");
 
 @mixin fullScreen {
-  height: 100vh;
+  height: 100dvh;
 }
 
 @mixin flexCenter {
@@ -25,26 +35,16 @@ $theme-colors: (
   align-items: center;
 }
 
-@mixin whitStrokeTxt {
-  font-size: 220px;
-  line-height: 281px;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
-  text-stroke: 2px rgba(255, 255, 255, 0.5);
-  -webkit-text-fill-color: transparent;
-  text-fill-color: transparent;
-  color: transparent;
-}
 
 ::-moz-selection {
   /* Code for Firefox */
-  color: theme-color(light);
-  background: theme-color(info);
+  color: var(--color-light);
+  background: var(--color-info);
 }
 
 ::selection {
-  color: theme-color(light);
-  background: theme-color(info);
+  color: var(--color-light);
+  background: var(--color-info);
 }
 
 body,
@@ -53,7 +53,7 @@ html {
   margin: 0;
   font-family: "Satoshi-Regular";
   -webkit-font-smoothing: subpixel-antialiased;
-  color: theme-color(max-light);
+  color: var(--color-max-light);
 }
 
 html {
@@ -61,43 +61,16 @@ html {
   overflow-x: hidden;
   font-size: calc(0.2em + 1vmin);
 }
+
 body {
   min-height: 100%;
-  background: theme-color(dark);
+  background: var(--color-dark);
 }
 
 #root {
   height: 100%;
   min-height: 100%;
-  overflow-y: scroll;
 }
-// html {
-//     @include media('<=phone') {
-//         font-size: 70%;
-//     }
-//     // if the breakpoint is greater than 360px and less than or eqaul to 425px
-//     @include media('>phone', '<=425px') {
-//         font-size: 75%;
-//     }
-
-//     // if the screen is going to be greater than 425px and less than or eqaul to 768px
-//     @include media('>425px', '<=tablet') {
-//         font-size: 85%;
-//     }
-
-//     // if the screen is going to be greater than 768px and less than 1366px
-//     @include media('>tablet', '<desktop') {
-//         font-size: 90%;
-//     }
-//     // if the screen is going to be greater than or equal to 1366px
-//     @include media('>=desktop') {
-//         font-size: 95%;
-//     }
-//     // if the screen is going to be greater than or equal to 1920px
-//     @include media('>=LGdesktop', 'retina2x') {
-//         font-size: 100%;
-//     }
-// }
 
 .App {
   flex-direction: column;
@@ -106,16 +79,44 @@ body {
   min-height: 100%;
 }
 
-@import "./Cursor.scss";
-@import "./Header.scss";
-@import "./Loader.scss";
-@import "./Hero.scss";
-@import "./Main.scss";
-@import "./Projects.scss";
-@import "./Contact.scss";
-@import "./Navigation.scss";
+#cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(var(--color-light-grey-rgb) / 0.85);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.85);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+}
+
+#cursor.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+#cursor.is-hidden {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.65);
+}
+
+@media (hover: none), (pointer: coarse), (max-width: 768px) {
+  #cursor {
+    display: none;
+  }
+}
+
+@include meta.load-css("./Header.scss");
+@include meta.load-css("./Hero.scss");
+@include meta.load-css("./Projects.scss");
+@include meta.load-css("./Contact.scss");
+@include meta.load-css("./Navigation.scss");
 
 .landing {
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
 }

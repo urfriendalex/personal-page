@@ -1,11 +1,11 @@
 a {
     text-decoration: none;
-    color: theme-color(light);
+    color: var(--color-light);
     outline: none;
 }
 
 a:hover {
-    color: theme-color(max-light);
+    color: var(--color-max-light);
     outline: none;
     text-decoration: none;
 }
@@ -38,9 +38,9 @@ a:focus-visible {
     white-space: nowrap;
 
     &.secondary {
-        color: rgba(theme-color('light'), 0.75);
+        color: rgb(var(--color-light-grey-rgb) / 75%);
         .link__graphic {
-            stroke: rgba(theme-color('light'), 0.75);
+            stroke: rgb(var(--color-light-grey-rgb) / 75%);
         }
     }
 }
@@ -88,7 +88,7 @@ a:focus-visible {
     left: 0;
     pointer-events: none;
     fill: none;
-    stroke: theme-color(max-light);
+    stroke: var(--color-max-light);
     stroke-width: 1px;
 }
 

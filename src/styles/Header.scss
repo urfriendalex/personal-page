@@ -8,21 +8,23 @@ header {
   position: fixed;
   z-index: 2000;
 
+  --logo-text-size: 1.5rem;
+
   .logo-text {
     font-family: "Satoshi-Black";
-    font-size: 1.5rem;
+    font-size: var(--logo-text-size);
     font-weight: 900;
     display: flex;
     overflow: hidden;
     cursor: pointer;
 
     .hidden-part {
-      transform: translateY(3rem) skew(0deg, 20deg);
+      transform: translateY(calc(var(--logo-text-size) * 2)) skew(0deg, 20deg);
       transition: 0.3s 0s all ease-in-out;
     }
 
     .ending-part {
-      transform: translateX(-8.25rem);
+      transform: translateX(calc(var(--logo-text-size) * -5.55));
       margin-left: 5px;
       transition: 0.3s 0.3s all ease-in-out;
     }
@@ -36,6 +38,10 @@ header {
         transition: 0.3s 0s all ease-in-out;
       }
     }
+
+    @media (max-width: 768px) {
+      --logo-text-size: 2.5rem;
+    }
   }
 
   .menu-toggler {
@@ -45,8 +51,8 @@ header {
 
     span {
       display: block;
-      background: theme-color(max-light);
-      color: theme-color(max-light);
+      background: var(--color-max-light);
+      color: var(--color-max-light);
       height: 1px;
       border-radius: 1px;
       margin: 9px 0 6px 0;
@@ -84,12 +90,12 @@ header {
 .light {
   header {
     .logo-text {
-      color: theme-color(dark);
+      color: var(--color-dark);
     }
     .menu-toggler {
       span {
-        background: theme-color(dark);
-        color: theme-color(dark);
+        background: var(--color-dark);
+        color: var(--color-dark);
       }
     }
   }

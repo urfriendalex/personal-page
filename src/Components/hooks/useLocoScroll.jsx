@@ -4,9 +4,7 @@ import { setScrollInstanse } from "../../redux/actions/scrollActions";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useEffect } from "react";
-import LocomotiveScroll from "locomotive-scroll";
-import "locomotive-scroll/src/locomotive-scroll.scss";
-import { switchThemeMode } from "../../redux/actions/uiActions";
+import Lenis from "lenis";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -15,79 +13,43 @@ export default function useLocoScroll(start) {
 
   useEffect(() => {
     if (!start) return;
-    let locoScroll = null;
 
-    const scrollEl = document.querySelector("#main-container");
-
-    locoScroll = new LocomotiveScroll({
-      el: scrollEl,
-      smooth: true,
-      smartphone: { smooth: true },
-      tablet: { smooth: true },
-      multiplier: 1,
-      class: "is-reveal",
-      inertia: 1.1,
+    // Initialize Lenis smooth scroll
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: "vertical",
+      smoothWheel: true,
     });
 
-    locoScroll.on("scroll", () => {
-      ScrollTrigger.update();
-    });
+    // Connect Lenis to GSAP ScrollTrigger
+    lenis.on("scroll", ScrollTrigger.update);
 
-    locoScroll.on("call", mode => {
-      if (mode === "toggleLights") {
-        dispatch(switchThemeMode());
-      }
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000);
     });
+    gsap.ticker.lagSmoothing(0);
 
-    ScrollTrigger.scrollerProxy(scrollEl, {
-      scrollTop(value) {
-        if (locoScroll) {
-          return arguments.length
-            ? locoScroll.scrollTo(value, 0, 0)
-            : locoScroll.scroll.instance.scroll.y;
+    // Store the lenis instance so other components can use scrollTo
+    const scrollProxy = {
+      scrollTo: (target, options) => {
+        if (typeof target === "string" || target instanceof Element) {
+          lenis.scrollTo(target, { offset: 0, ...options });
+        } else {
+          lenis.scrollTo(target, options);
         }
-        return null;
       },
-      scrollLeft(value) {
-        if (locoScroll) {
-          return arguments.length
-            ? locoScroll.scrollTo(value, 0, 0)
-            : locoScroll.scroll.instance.scroll.x;
-        }
-        return null;
-      },
-      getBoundingClientRect() {
-        if (locoScroll) {
-          return {
-            top: 0,
-            left: 0,
-            width: window.innerWidth,
-            height: window.innerHeight,
-          };
-        }
-        return null;
-      },
-      // LocomotiveScroll handles things completely differently on mobile devices - it doesn't even transform the container at all! So to get the correct behavior and avoid jitters, we should pin things with position: fixed on mobile. We sense it by checking to see if there's a transform applied to the container (the LocomotiveScroll-controlled element).
-      pinType: scrollEl.style.transform ? "transform" : "fixed",
-    });
-
-    const lsUpdate = () => {
-      if (locoScroll) {
-        locoScroll.update();
-      }
+      lenis,
     };
 
-    ScrollTrigger.addEventListener("refresh", lsUpdate);
+    dispatch(setScrollInstanse(scrollProxy));
     ScrollTrigger.refresh();
-    dispatch(setScrollInstanse(locoScroll));
 
     return () => {
-      if (locoScroll) {
-        ScrollTrigger.removeEventListener("refresh", lsUpdate);
-        locoScroll.destroy();
-        locoScroll = null;
-        console.log("Kill", locoScroll);
-      }
+      gsap.ticker.remove((time) => {
+        lenis.raf(time * 1000);
+      });
+      lenis.destroy();
     };
   }, [start, dispatch]);
 }

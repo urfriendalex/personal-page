@@ -1,9 +1,10 @@
 import React from "react";
-import { splitToSpans } from "./tools/functions";
+import { splitToSpans } from "./tools/functions.jsx";
 import { useSelector } from "react-redux";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const Navigation = ({ navActive, setNavActive }) => {
-  const scroll = useSelector(state => state.scroll.scrollInstanse);
+  const scroll = useSelector(state => state.scroll.scrollInstance);
   return (
     <nav className={`navFull${navActive ? " active" : ""}`}>
       <div className="navItem">
@@ -11,7 +12,9 @@ const Navigation = ({ navActive, setNavActive }) => {
           href="#about"
           onClick={event => {
             event.preventDefault();
-            scroll.scrollTo(document.querySelector("#about"));
+            if (scroll?.scrollTo) {
+              scroll.scrollTo(document.querySelector("#about"));
+            }
             setNavActive(!navActive);
           }}
         >
@@ -24,7 +27,16 @@ const Navigation = ({ navActive, setNavActive }) => {
           href="#projects"
           onClick={event => {
             event.preventDefault();
-            scroll.scrollTo(document.querySelector("#projects"));
+            if (scroll?.scrollTo) {
+              const projectsEl = document.querySelector("#projects");
+              if (projectsEl) {
+                scroll.scrollTo(projectsEl, {
+                  offset: 0,
+                  immediate: true,
+                });
+                requestAnimationFrame(() => ScrollTrigger.refresh());
+              }
+            }
             setNavActive(!navActive);
           }}
         >

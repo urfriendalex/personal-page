@@ -1,6 +1,6 @@
 .hero {
   z-index: 1;
-  min-height: 100vh;
+  min-height: 100dvh;
   height: 100%;
   width: 100%;
   display: flex;
@@ -19,11 +19,18 @@
     position: absolute;
     top: 0;
     left: 0;
-    height: 100vh;
+    height: 100dvh;
     width: 100%;
     z-index: -1;
     overflow: hidden;
-    transition: all 1s ease-in-out;
+    opacity: 0;
+    pointer-events: none;
+    will-change: opacity;
+    transition: opacity 1s ease-in-out;
+
+    &.active {
+      opacity: 1;
+    }
 
     &.bg-1 {
       background-image: url("../img/mesh01.png");
@@ -92,8 +99,8 @@
       height: 5rem;
       margin-top: -1rem;
       margin-bottom: 1rem;
-      -webkit-text-stroke: 2px theme-color(max-light);
-      text-stroke: 2px theme-color(max-light);
+      -webkit-text-stroke: var(--text-stroke-width) var(--color-max-light);
+      text-stroke: var(--text-stroke-width) var(--color-max-light);
       -webkit-text-fill-color: transparent;
       text-fill-color: transparent;
       span {
@@ -114,8 +121,8 @@
     .text-2 {
       font-family: seif;
       font-weight: 700;
-      -webkit-text-stroke: 2px theme-color(max-light);
-      text-stroke: 2px theme-color(max-light);
+      -webkit-text-stroke: var(--text-stroke-width) var(--color-max-light);
+      text-stroke: var(--text-stroke-width) var(--color-max-light);
       -webkit-text-fill-color: unset;
       text-fill-color: unset;
       &:hover {
@@ -133,7 +140,11 @@
       background: transparent;
       border: none;
       transition: 0.3s all ease-in-out;
-      color: theme-color(light);
+      color: var(--color-light);
+
+      @media (max-width: 768px) {
+        font-size: 2rem;
+      }
     }
   }
 }

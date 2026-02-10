@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 
 const Header = ({ navActive, setNavActive }) => {
-  const scroll = useSelector(state => state.scroll.scrollInstanse);
+  const scroll = useSelector(state => state.scroll.scrollInstance);
   return (
     <header>
       <h1

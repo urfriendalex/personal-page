@@ -1,95 +1,260 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { switchBgVersion } from "../redux/actions/uiActions";
+import { switchBgVersion, switchThemeMode } from "../redux/actions/uiActions";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
+
+const STICKY_TOPS = [0, 20, 40, 60, 80]; // vh – where each line sticks
 
 const Contact = () => {
-  const bgVersion = useSelector(state => state.UI.bgVersion);
+  const bgVersion = useSelector((state) => state.UI.bgVersion);
   const dispatch = useDispatch();
+  const sectionRef = useRef(null);
+  const smileyRef = useRef(null);
+  const socialsRef = useRef(null);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const ctx = gsap.context(() => {
+      /* ---- sticky "Contact Me" lines ---- */
+      const titleDivs = gsap.utils.toArray(".section-title", section);
+      let endStateInfiniteMarquee = null;
+      let endStateScrollTween = null;
+      let endStateLine = null;
+      const getMarqueeTravel = (lineEl) => {
+        const unit = lineEl.querySelector(".contact-me-unit");
+        if (!unit) return 0;
+        const unitWidth = unit.getBoundingClientRect().width;
+        const lineStyles = window.getComputedStyle(lineEl);
+        const gap = Number.parseFloat(lineStyles.columnGap || lineStyles.gap || "0") || 0;
+        return unitWidth + gap;
+      };
+
+      titleDivs.forEach((titleDiv, i) => {
+        const line = titleDiv.querySelector(".line");
+        if (!line) return;
+        const stickyTop = STICKY_TOPS[i];
+        const marqueeDirection = i % 2 === 0 ? -1 : 1;
+        const isEndStateTitle = i === 0; // section-titlte-scroll-1 is the line visible at the end state
+        if (isEndStateTitle) {
+          endStateLine = line;
+        }
+
+        gsap.set(line, {
+          left: "50%",
+          xPercent: -50,
+          x: 0,
+        });
+
+        ScrollTrigger.create({
+          trigger: titleDiv,
+          start: `top ${stickyTop}vh`,
+          end: `bottom ${stickyTop}vh`,
+          onEnter: () => {
+            line.style.position = "fixed";
+            line.style.top = `${stickyTop}vh`;
+            line.style.left = "50%";
+          },
+          onLeave: () => {
+            line.style.position = "";
+            line.style.top = "";
+            line.style.left = "";
+          },
+          onEnterBack: () => {
+            line.style.position = "fixed";
+            line.style.top = `${stickyTop}vh`;
+            line.style.left = "50%";
+          },
+          onLeaveBack: () => {
+            line.style.position = "";
+            line.style.top = "";
+            line.style.left = "";
+          },
+        });
+
+        // Scroll-driven horizontal marquee while each title line is active.
+        const scrollTween = gsap.fromTo(
+          line,
+          { x: 0 },
+          {
+            x: () => marqueeDirection * getMarqueeTravel(line),
+            ease: "none",
+            scrollTrigger: {
+              trigger: titleDiv,
+              start: `top ${stickyTop}vh`,
+              end: `bottom ${stickyTop}vh`,
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
+          }
+        );
+
+        if (isEndStateTitle) {
+          endStateScrollTween = scrollTween;
+        }
+      });
+
+      /* ---- theme toggle – fires when the last "Contact Me" stacks ---- */
+      const lastTitle = titleDivs[titleDivs.length - 1];
+      if (lastTitle) {
+        ScrollTrigger.create({
+          trigger: lastTitle,
+          start: `top ${STICKY_TOPS[STICKY_TOPS.length - 1]}vh`,
+          end: "bottom bottom",
+          onEnter: () => {
+            section.classList.add("scrolled");
+            dispatch(switchThemeMode()); // global .light
+            if (endStateScrollTween?.scrollTrigger) {
+              endStateScrollTween.scrollTrigger.disable();
+            }
+            if (endStateInfiniteMarquee) {
+              endStateInfiniteMarquee.kill();
+              endStateInfiniteMarquee = null;
+            }
+            if (endStateLine) {
+              const travel = getMarqueeTravel(endStateLine);
+              gsap.set(endStateLine, { x: 0 });
+              endStateInfiniteMarquee = gsap.to(endStateLine, {
+                x: -travel,
+                duration: 6.5,
+                ease: "none",
+                repeat: -1,
+                modifiers: {
+                  x: (value) => `${gsap.utils.wrap(-travel, 0, Number.parseFloat(value))}px`,
+                },
+              });
+            }
+          },
+          onLeaveBack: () => {
+            section.classList.remove("scrolled");
+            dispatch(switchThemeMode()); // revert global .light
+            if (endStateInfiniteMarquee) {
+              endStateInfiniteMarquee.kill();
+              endStateInfiniteMarquee = null;
+            }
+            if (endStateScrollTween?.scrollTrigger) {
+              endStateScrollTween.scrollTrigger.enable();
+              endStateScrollTween.scrollTrigger.refresh();
+            }
+            if (endStateLine) {
+              gsap.set(endStateLine, { x: 0 });
+            }
+          },
+        });
+      }
+
+      /* ---- contact-details sticky ---- */
+      const detailsScroll = section.querySelector("#contact-details-scroll");
+      const detailsWrapper = section.querySelector(".contact-details-wrapper");
+      if (detailsScroll && detailsWrapper) {
+        ScrollTrigger.create({
+          trigger: detailsScroll,
+          start: "top top",
+          end: "bottom bottom",
+          pin: detailsWrapper,
+          pinSpacing: false,
+        });
+      }
+
+      /* ---- smiley parallax ---- */
+      if (smileyRef.current) {
+        const mobile = window.matchMedia("(max-width: 768px)").matches;
+        gsap.to(smileyRef.current, {
+          x: mobile ? -20 : -200,
+          ease: "none",
+          scrollTrigger: {
+            trigger: smileyRef.current,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
+
+      /* ---- socials parallax ---- */
+      if (socialsRef.current) {
+        const mobile = window.matchMedia("(max-width: 768px)").matches;
+        gsap.to(socialsRef.current, {
+          x: mobile ? 10 : 100,
+          ease: "none",
+          scrollTrigger: {
+            trigger: socialsRef.current,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
+    }, section);
+
+    return () => ctx.revert();
+  }, [dispatch]);
+
   return (
-    <section
-      data-scroll-section
-      data-scroll
-      data-scroll-class="scrolled"
-      data-persistent
-      data-scroll-section-id="section3"
-      data-scroll-offset="300%"
-      data-scroll-call="toggleLights"
-      data-scroll-repeat
-      id="contact"
-      className={`bg-dark`}
-    >
-      {[1, 2, 3, 4, 5].map(number => (
-        <div key={number} id={`section-titlte-scroll-${number}`} className="section-title">
-          <div
-            className="line"
-            data-scroll
-            data-scroll-sticky
-            data-scroll-target={`#section-titlte-scroll-${number}`}
-          >
-            <span>Contact</span>
-            <span className="second-word">Me</span>
-            <span>Contact</span>
-            <span className="second-word">Me</span>
-            <span>Contact</span>
-            <span className="second-word">Me</span>
-            <span>Contact</span>
-            <span className="second-word">Me</span>
+    <section ref={sectionRef} id="contact">
+      {[1, 2, 3, 4, 5].map((number) => (
+        <div
+          key={number}
+          id={`section-titlte-scroll-${number}`}
+          className="section-title"
+        >
+          <div className="line">
+            {Array.from({ length: number === 1 ? 5 : 3 }).map((_, idx) => (
+              <span key={idx + 1} className="contact-me-unit">
+                Contact
+                <span className="second-word">Me</span>
+              </span>
+            ))}
           </div>
         </div>
       ))}
       <div id="contact-details-scroll">
-        <div
-          data-scroll
-          data-scroll-sticky
-          data-scroll-target="#contact-details-scroll"
-          className="contact-details-wrapper"
-        >
+        <div className="contact-details-wrapper">
           <div className="mail-link-wrapper">
-            <a className="mail-link link link-underline" href="mailto:alex.yansons@gmail.com">
+            <a
+              className="mail-link link link-underline"
+              href="mailto:alex.yansons@gmail.com"
+            >
               SAY<i> HI.</i>
             </a>
           </div>
-          <div
-            className="smileyFace-row-wrapper"
-            data-scroll
-            data-scroll-direction="horizontal"
-            data-scroll-speed="-4"
-          >
+          <div ref={smileyRef} className="smileyFace-row-wrapper">
             <div className="smileyFace-wrapper">
               <div className="smileyFace">
                 <div className="left-eye"></div>
                 <div className="right-eye"></div>
-
                 <div className="mouth"></div>
               </div>
             </div>
           </div>
-          <div
-            data-scroll
-            data-scroll-direction="horizontal"
-            data-scroll-speed="2"
-            className="social-links-container"
-          >
+          <div ref={socialsRef} className="social-links-container">
             <div className="text">Socials</div>
             <div className="social-links-list">
               <a
                 className="link link-underline"
                 href="https://www.linkedin.com/in/alexander-yansons-2005a117a/"
-                target="blank"
+                target="_blank"
+                rel="noreferrer"
               >
                 linkedin
               </a>
               <a
                 className="link link-underline"
                 href="https://github.com/urfriendalex"
-                target="blank"
+                target="_blank"
+                rel="noreferrer"
               >
                 github
               </a>
               <a
                 className="link link-underline"
                 href="https://www.instagram.com/urfriendalex/"
-                target="blank"
+                target="_blank"
+                rel="noreferrer"
               >
                 instagram
               </a>
@@ -99,9 +264,7 @@ const Contact = () => {
         <div className="bg-changer">
           <div
             className="btn link link-wavy"
-            onClick={() => {
-              dispatch(switchBgVersion());
-            }}
+            onClick={() => dispatch(switchBgVersion())}
           >
             <span>click</span>
             <svg
@@ -116,7 +279,12 @@ const Contact = () => {
           </div>
         </div>
       </div>
-      <div className={`background-holder bg-${bgVersion}`}></div>
+      {[1, 2, 3].map((item) => (
+        <div
+          key={item}
+          className={`background-holder bg-${item} ${bgVersion === item ? "active" : ""}`}
+        ></div>
+      ))}
     </section>
   );
 };

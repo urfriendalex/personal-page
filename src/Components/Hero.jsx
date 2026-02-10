@@ -1,22 +1,57 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { switchBgVersion } from "../redux/actions/uiActions";
-// import useLocalStorage from './hooks/useLocalStorage';
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const Hero = () => {
-  const scroll = useSelector(state => state.scroll.scrollInstanse);
+  const scroll = useSelector(state => state.scroll.scrollInstance);
   const dispatch = useDispatch();
   const bgVersion = useSelector(state => state.UI.bgVersion);
 
+  const text1Ref = useRef(null);
+  const text4Ref = useRef(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Parallax: "Hi, I'm Alex" moves right on scroll
+      if (text1Ref.current) {
+        gsap.to(text1Ref.current, {
+          x: 200,
+          ease: "none",
+          scrollTrigger: {
+            trigger: text1Ref.current,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
+
+      // Parallax: "lets talk." moves left on scroll
+      if (text4Ref.current) {
+        gsap.to(text4Ref.current, {
+          x: -150,
+          ease: "none",
+          scrollTrigger: {
+            trigger: text4Ref.current,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
+    });
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section data-scroll-section data-scroll-section-id="section1" className="hero" id="about">
+    <section className="hero" id="about">
       <div className="hero-text-wrapper">
-        <h1
-          className="text text-1"
-          data-scroll
-          data-scroll-direction="horizontal"
-          data-scroll-speed="3"
-        >
+        <h1 ref={text1Ref} className="text text-1">
           <span>Hi, I'm Alex</span>
         </h1>
         <h2 className="text text-2">
@@ -28,19 +63,16 @@ const Hero = () => {
         <h2 className="text text-3">
           <span>design enthusiast</span>
         </h2>
-        <h3
-          className="text text-4"
-          data-scroll
-          data-scroll-direction="horizontal"
-          data-scroll-speed="-2"
-        >
+        <h3 ref={text4Ref} className="text text-4">
           <span>
             <a
               href="#contact"
               className="link link-underline"
               onClick={event => {
                 event.preventDefault();
-                scroll.scrollTo(document.querySelector("#contact-details-scroll"));
+                if (scroll && scroll.scrollTo) {
+                  scroll.scrollTo(document.querySelector("#contact-details-scroll"));
+                }
               }}
             >
               lets talk.
@@ -70,7 +102,7 @@ const Hero = () => {
       {[1, 2, 3].map((item, index) => (
         <div
           key={index}
-          className={`background-container bg-${bgVersion} ${bgVersion === item ? "active" : ""}`}
+          className={`background-container bg-${item} ${bgVersion === item ? "active" : ""}`}
         ></div>
       ))}
     </section>

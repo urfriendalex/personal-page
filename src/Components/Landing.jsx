@@ -4,14 +4,17 @@ import Hero from "./Hero";
 import Navigation from "./Navigation";
 import Projects from "../components/Projects";
 import Contact from "../components/Contact";
+import useLocoScroll from "./hooks/useLocoScroll";
 
 const Landing = () => {
   const [navActive, setNavActive] = useState(false);
+  useLocoScroll(true);
+
   return (
     <div className="landing">
       <Header navActive={navActive} setNavActive={setNavActive} />
       <Navigation navActive={navActive} setNavActive={setNavActive} />
-      <div id="main-container" data-scroll-container>
+      <div id="main-container">
         <Hero />
         <Projects />
         <Contact />

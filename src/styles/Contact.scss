@@ -7,10 +7,8 @@
     content: "";
     background-image: url("../img/noise02.png");
     position: absolute;
-    margin-top: -5vh;
-    height: 375vh;
+    height: 100%;
     width: 100%;
-    position: fixed;
     top: 0;
     left: 0;
     background-repeat: round;
@@ -29,11 +27,13 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    height: 100vh;
+    height: 100dvh;
     width: 100%;
     z-index: 0;
     overflow: hidden;
-    transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
+    will-change: opacity;
+    transition: opacity 1s ease-in-out;
 
     &.bg-1 {
       background-image: url("../img/mesh-btm-01.png");
@@ -47,7 +47,7 @@
   }
 
   &.scrolled {
-    background: theme-color(light) !important;
+    background: var(--color-light) !important;
     transition: background 0.2s ease-in-out;
 
     &::after {
@@ -56,22 +56,25 @@
     }
 
     .background-holder {
-      opacity: 1;
-      transition: opacity 0.2s 0.2s ease-in-out, background-image 1s ease-in-out;
+      transition: opacity 1s ease-in-out;
+
+      &.active {
+        opacity: 1;
+      }
     }
 
     .section-title {
       .line span {
         -webkit-text-fill-color: transparent;
         text-fill-color: transparent;
-        text-stroke: 2px transparent;
-        -webkit-text-stroke: 2px transparent;
+        text-stroke: var(--text-stroke-width) transparent;
+        -webkit-text-stroke: var(--text-stroke-width) transparent;
       }
       &:nth-of-type(1) {
         .line {
           span {
-            -webkit-text-stroke: 2px rgba(theme-color(light-grey), 20%);
-            text-stroke: 2px rgba(theme-color(light-grey), 20%);
+            -webkit-text-stroke: var(--text-stroke-width) rgb(var(--color-light-grey-rgb) / 95%);
+            text-stroke: var(--text-stroke-width) rgb(var(--color-light-grey-rgb) / 95%);
             -webkit-text-fill-color: transparent;
             text-fill-color: transparent;
           }
@@ -90,10 +93,10 @@
     position: absolute;
     top: 285vh;
     opacity: 0;
-    height: 100vh;
+    height: 100dvh;
     width: 100%;
     visibility: hidden;
-    z-index: 1;
+    z-index: 2;
     transition: 0.3s opacity ease-in-out, 0s 0.3s visibility ease-in-out;
 
     .contact-details-wrapper {
@@ -101,6 +104,8 @@
       flex-direction: column;
       width: 90%;
       margin: 0 auto;
+      position: relative;
+      z-index: 3;
       .text {
         font-size: 7rem;
         display: flex;
@@ -123,7 +128,7 @@
           width: 10rem;
           background-color: transparent;
           border-radius: 50%;
-          border: theme-color(dark) solid 5px;
+          border: var(--color-dark) solid 5px;
           z-index: -1;
 
           .left-eye {
@@ -132,7 +137,7 @@
             left: 35%;
             height: 3rem;
             width: 5px;
-            background-color: theme-color(dark);
+            background-color: var(--color-dark);
             z-index: 2;
           }
 
@@ -142,7 +147,7 @@
             right: 35%;
             height: 3rem;
             width: 5px;
-            background-color: theme-color(dark);
+            background-color: var(--color-dark);
             z-index: 2;
           }
 
@@ -156,7 +161,7 @@
             border-style: solid;
             border-color: transparent;
             background-color: transparent;
-            border-bottom-color: theme-color(dark);
+            border-bottom-color: var(--color-dark);
             border-bottom-style: solid;
             border-bottom-width: 5px;
             border-radius: 0% 0% 50% 50%;
@@ -168,19 +173,22 @@
         font-style: italic;
         font-size: 5rem;
         font-weight: 600;
-        color: theme-color(dark);
+        color: var(--color-dark);
 
         &:hover {
           -webkit-text-fill-color: transparent;
           text-fill-color: transparent;
-          -webkit-text-stroke: 1px theme-color(dark);
-          text-stroke: 1px theme-color(dark);
+          -webkit-text-stroke: var(--text-stroke-width) var(--color-dark);
+          text-stroke: var(--text-stroke-width) var(--color-dark);
         }
       }
 
       .social-links-container {
         margin-left: auto;
         margin-right: 4rem;
+        position: relative;
+        z-index: 4;
+        pointer-events: auto;
         .text {
           font-size: 4rem;
           font-family: seif;
@@ -190,9 +198,37 @@
           display: flex;
           flex-direction: column;
           align-items: flex-end;
+          pointer-events: auto;
           .a {
             width: fit-content;
-            color: theme-color(dark);
+            color: var(--color-dark);
+          }
+
+          a {
+            pointer-events: auto;
+            position: relative;
+            z-index: 5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0.2rem 0;
+          }
+        }
+
+        @media (max-width: 768px) {
+
+          .text {
+            font-size: 5rem;
+            margin-bottom: 0.6rem;
+          }
+
+          .social-links-list {
+
+            a {
+              font-size: 2.5rem;
+              line-height: 1.5;
+              touch-action: manipulation;
+            }
           }
         }
       }
@@ -206,7 +242,7 @@
         background: transparent;
         border: none;
         transition: 0.3s all ease-in-out;
-        color: theme-color(light);
+        color: var(--color-light);
       }
     }
   }
@@ -218,25 +254,37 @@
     width: 100%;
     position: absolute;
     z-index: 1;
+    pointer-events: none;
 
     .line {
       display: flex;
+      gap: 3rem;
       position: absolute;
       top: 0vh;
-      margin-left: -5vw;
+      left: 50%;
+      z-index: 1;
+      white-space: nowrap;
+      pointer-events: none;
 
-      span {
+      .contact-me-unit {
+        display: inline-flex;
+        align-items: baseline;
         font-size: 15rem;
         line-height: 13rem;
         font-family: seif;
-        -webkit-text-stroke: 2px theme-color(max-light);
-        text-stroke: 2px theme-color(max-light);
+        -webkit-text-stroke: var(--text-stroke-width) var(--color-max-light);
+        text-stroke: 2px var(--color-max-light);
         -webkit-text-fill-color: transparent;
         text-fill-color: transparent;
         transition: all 0.5s ease-in-out;
 
-        &.second-word {
-          margin: 0 3rem 0rem 2rem;
+        .second-word {
+          margin-left: 2rem;
+        }
+
+        @media (max-width: 768px) {
+          font-size: 30rem;
+          line-height: 28rem;
         }
       }
     }
@@ -257,14 +305,14 @@
     }
     &:nth-of-type(3) {
       height: 300vh;
-      top: 100vh;
+      top: 100dvh;
       .line {
         top: 40vh;
       }
     }
     &:nth-of-type(4) {
       height: 250vh;
-      top: 150vh;
+      top: 150dvh;
       .line {
         top: 60vh;
       }
