@@ -7,6 +7,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const STICKY_TOPS = [0, 20, 40, 60, 80]; // vh – where each line sticks
+const MOBILE_VIEWPORT_REFRESH_DELTA_PX = 96;
+const VIEWPORT_REFRESH_DEBOUNCE_MS = 260;
 
 const Contact = () => {
   const bgVersion = useSelector((state) => state.UI.bgVersion);
@@ -259,11 +261,31 @@ const Contact = () => {
       }
     }, section);
 
-    const refreshOnViewportChange = () => ScrollTrigger.refresh();
+    let refreshTimeoutId = null;
+    let lastViewportHeight = window.visualViewport?.height || window.innerHeight;
+    const refreshOnViewportChange = () => {
+      const nextViewportHeight = window.visualViewport?.height || window.innerHeight;
+      const viewportDelta = Math.abs(nextViewportHeight - lastViewportHeight);
+
+      // Ignore small, continuous toolbar animation deltas on iOS.
+      if (viewportDelta < MOBILE_VIEWPORT_REFRESH_DELTA_PX) return;
+      lastViewportHeight = nextViewportHeight;
+
+      if (refreshTimeoutId !== null) {
+        window.clearTimeout(refreshTimeoutId);
+      }
+      refreshTimeoutId = window.setTimeout(() => {
+        refreshTimeoutId = null;
+        ScrollTrigger.refresh();
+      }, VIEWPORT_REFRESH_DEBOUNCE_MS);
+    };
     window.addEventListener("orientationchange", refreshOnViewportChange);
     window.visualViewport?.addEventListener("resize", refreshOnViewportChange);
 
     return () => {
+      if (refreshTimeoutId !== null) {
+        window.clearTimeout(refreshTimeoutId);
+      }
       window.removeEventListener("orientationchange", refreshOnViewportChange);
       window.visualViewport?.removeEventListener("resize", refreshOnViewportChange);
       ctx.revert();

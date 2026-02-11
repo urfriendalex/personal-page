@@ -10,6 +10,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 const MOBILE_BP = 768;
 const MIN_PROGRESS_RANGE = 0.0001;
+const MOBILE_VIEWPORT_REFRESH_DELTA_PX = 96;
+const VIEWPORT_REFRESH_DEBOUNCE_MS = 260;
 const getViewportHeight = () =>
   Math.max(1, window.visualViewport?.height || window.innerHeight);
 
@@ -487,12 +489,36 @@ const Projects = () => {
     });
 
     let refreshRafId = null;
+    let refreshTimeoutId = null;
+    let lastViewportHeight = getViewportHeight();
+    const mobileMediaQuery = window.matchMedia(`(max-width: ${MOBILE_BP}px)`);
+
     const refreshViewportDrivenLayout = () => {
       if (refreshRafId !== null) return;
       refreshRafId = window.requestAnimationFrame(() => {
         refreshRafId = null;
-        scrollRef.current?.lenis?.resize?.();
-        ScrollTrigger.refresh();
+
+        // iOS Safari emits frequent visualViewport resize events while the bar animates.
+        // Debounce and ignore tiny height deltas to avoid refresh-induced jank.
+        const nextViewportHeight = getViewportHeight();
+        const viewportDelta = Math.abs(nextViewportHeight - lastViewportHeight);
+        const shouldRefreshNow =
+          !mobileMediaQuery.matches ||
+          viewportDelta >= MOBILE_VIEWPORT_REFRESH_DELTA_PX;
+
+        if (!shouldRefreshNow) return;
+
+        lastViewportHeight = nextViewportHeight;
+
+        if (refreshTimeoutId !== null) {
+          window.clearTimeout(refreshTimeoutId);
+        }
+
+        refreshTimeoutId = window.setTimeout(() => {
+          refreshTimeoutId = null;
+          scrollRef.current?.lenis?.resize?.();
+          ScrollTrigger.refresh();
+        }, VIEWPORT_REFRESH_DEBOUNCE_MS);
       });
     };
 
@@ -507,6 +533,9 @@ const Projects = () => {
       );
       if (refreshRafId !== null) {
         window.cancelAnimationFrame(refreshRafId);
+      }
+      if (refreshTimeoutId !== null) {
+        window.clearTimeout(refreshTimeoutId);
       }
       window.removeEventListener("resize", refreshViewportDrivenLayout);
       window.removeEventListener("orientationchange", refreshViewportDrivenLayout);

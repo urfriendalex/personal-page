@@ -23,12 +23,6 @@
   }
 }
 
-@supports (height: 100dvh) {
-  :root {
-    --full-vh: 100dvh;
-  }
-}
-
 @media screen and (max-width: 768px) {
   :root {
     --text-stroke-width: 1px;

@@ -248,10 +248,9 @@
         border: none;
         transition: 0.3s all ease-in-out;
         color: var(--color-light);
-      }
-
-      @media (max-width: 768px) {
-        font-size: 2rem;
+        @media (max-width: 768px) {
+          font-size: 2rem;
+        }
       }
     }
   }
