@@ -70,15 +70,12 @@
         text-stroke: var(--text-stroke-width) transparent;
         -webkit-text-stroke: var(--text-stroke-width) transparent;
       }
-      &:nth-of-type(1) {
-        .line {
-          span {
-            -webkit-text-stroke: var(--text-stroke-width) rgb(var(--color-light-grey-rgb) / 95%);
-            text-stroke: var(--text-stroke-width) rgb(var(--color-light-grey-rgb) / 95%);
-            -webkit-text-fill-color: transparent;
-            text-fill-color: transparent;
-          }
-        }
+
+      &.is-primary .line span {
+        -webkit-text-stroke: var(--text-stroke-width) rgb(var(--color-light-grey-rgb) / 95%);
+        text-stroke: var(--text-stroke-width) rgb(var(--color-light-grey-rgb) / 95%);
+        -webkit-text-fill-color: transparent;
+        text-fill-color: transparent;
       }
     }
 
@@ -256,7 +253,7 @@
   }
 
   .section-title {
-    margin-top: calc(var(--full-vh) * -0.1);
+    margin-top: calc(var(--full-vh) * 0.06);
     display: flex;
     flex-direction: column;
     width: 100%;

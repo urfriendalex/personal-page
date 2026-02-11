@@ -7,8 +7,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const STICKY_TOPS = [0, 20, 40, 60, 80]; // vh – where each line sticks
-const MOBILE_VIEWPORT_REFRESH_DELTA_PX = 96;
-const VIEWPORT_REFRESH_DEBOUNCE_MS = 260;
 
 const Contact = () => {
   const bgVersion = useSelector((state) => state.UI.bgVersion);
@@ -30,9 +28,6 @@ const Contact = () => {
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
     const ctx = gsap.context(() => {
-      const getViewportHeight = () => window.visualViewport?.height || window.innerHeight;
-      const vhToPx = (vhValue) => (getViewportHeight() * vhValue) / 100;
-
       /* ---- sticky "Contact Me" lines ---- */
       const titleDivs = gsap.utils.toArray(".section-title", section);
       let endStateInfiniteMarquee = null;
@@ -45,6 +40,22 @@ const Contact = () => {
         const lineStyles = window.getComputedStyle(lineEl);
         const gap = Number.parseFloat(lineStyles.columnGap || lineStyles.gap || "0") || 0;
         return unitWidth + gap;
+      };
+      const handoffToFixed = (lineEl, stickyTop) => {
+        const rect = lineEl.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+
+        lineEl.style.position = "fixed";
+        lineEl.style.top = `${rect.top}px`;
+        lineEl.style.left = `${centerX}px`;
+
+        gsap.to(lineEl, {
+          top: `${stickyTop}vh`,
+          left: "50%",
+          duration: 0.16,
+          ease: "power1.out",
+          overwrite: "auto",
+        });
       };
 
       titleDivs.forEach((titleDiv, i) => {
@@ -61,16 +72,16 @@ const Contact = () => {
           left: "50%",
           xPercent: -50,
           x: 0,
+          y: 0,
+          force3D: true,
         });
 
         ScrollTrigger.create({
           trigger: titleDiv,
-          start: () => `top ${vhToPx(stickyTop)}px`,
-          end: () => `bottom ${vhToPx(stickyTop)}px`,
+          start: `top ${stickyTop}vh`,
+          end: `bottom ${stickyTop}vh`,
           onEnter: () => {
-            line.style.position = "fixed";
-            line.style.top = `${vhToPx(stickyTop)}px`;
-            line.style.left = "50%";
+            handoffToFixed(line, stickyTop);
           },
           onLeave: () => {
             line.style.position = "";
@@ -78,9 +89,7 @@ const Contact = () => {
             line.style.left = "";
           },
           onEnterBack: () => {
-            line.style.position = "fixed";
-            line.style.top = `${vhToPx(stickyTop)}px`;
-            line.style.left = "50%";
+            handoffToFixed(line, stickyTop);
           },
           onLeaveBack: () => {
             line.style.position = "";
@@ -98,8 +107,8 @@ const Contact = () => {
             ease: "none",
             scrollTrigger: {
               trigger: titleDiv,
-              start: () => `top ${vhToPx(stickyTop)}px`,
-              end: () => `bottom ${vhToPx(stickyTop)}px`,
+              start: `top ${stickyTop}vh`,
+              end: `bottom ${stickyTop}vh`,
               scrub: true,
               invalidateOnRefresh: true,
             },
@@ -168,7 +177,7 @@ const Contact = () => {
 
         ScrollTrigger.create({
           trigger: lastTitle,
-          start: () => `top ${vhToPx(STICKY_TOPS[STICKY_TOPS.length - 1])}px`,
+          start: `top ${STICKY_TOPS[STICKY_TOPS.length - 1]}vh`,
           end: "bottom bottom",
           onUpdate: (self) => {
             if (self.progress >= activationProgress) {
@@ -261,33 +270,7 @@ const Contact = () => {
       }
     }, section);
 
-    let refreshTimeoutId = null;
-    let lastViewportHeight = window.visualViewport?.height || window.innerHeight;
-    const refreshOnViewportChange = () => {
-      const nextViewportHeight = window.visualViewport?.height || window.innerHeight;
-      const viewportDelta = Math.abs(nextViewportHeight - lastViewportHeight);
-
-      // Ignore small, continuous toolbar animation deltas on iOS.
-      if (viewportDelta < MOBILE_VIEWPORT_REFRESH_DELTA_PX) return;
-      lastViewportHeight = nextViewportHeight;
-
-      if (refreshTimeoutId !== null) {
-        window.clearTimeout(refreshTimeoutId);
-      }
-      refreshTimeoutId = window.setTimeout(() => {
-        refreshTimeoutId = null;
-        ScrollTrigger.refresh();
-      }, VIEWPORT_REFRESH_DEBOUNCE_MS);
-    };
-    window.addEventListener("orientationchange", refreshOnViewportChange);
-    window.visualViewport?.addEventListener("resize", refreshOnViewportChange);
-
     return () => {
-      if (refreshTimeoutId !== null) {
-        window.clearTimeout(refreshTimeoutId);
-      }
-      window.removeEventListener("orientationchange", refreshOnViewportChange);
-      window.visualViewport?.removeEventListener("resize", refreshOnViewportChange);
       ctx.revert();
     };
   }, [dispatch]);
@@ -298,7 +281,7 @@ const Contact = () => {
         <div
           key={number}
           id={`section-titlte-scroll-${number}`}
-          className="section-title"
+          className={`section-title${number === 1 ? " is-primary" : ""}`}
         >
           <div className="line">
             {Array.from({ length: number === 1 ? 5 : 3 }).map((_, idx) => (
