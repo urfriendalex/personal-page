@@ -9,8 +9,9 @@ import { useSelector } from "react-redux";
 gsap.registerPlugin(ScrollTrigger);
 
 const MOBILE_BP = 768;
-const getViewportHeight = () =>
-  Math.max(1, window.visualViewport?.height || window.innerHeight);
+const MIN_PROGRESS_RANGE = 0.0001;
+const getViewportHeight = (sectionEl) =>
+  Math.max(1, sectionEl?.clientHeight || window.innerHeight);
 
 const projects = [
   {
@@ -24,7 +25,7 @@ const projects = [
   },
   {
     bannerImg: "img/project-banners/dmilkanova.png",
-    title: "DIANA MILKANOVA BRAND",
+    title: "DIANA MILKANOVA",
     description: "E-commerce website for an independent clothing brand.",
     year: "2020",
     partial: false,
@@ -126,10 +127,12 @@ const Project = ({
 
 const Projects = () => {
   const scroll = useSelector(state => state.scroll.scrollInstance);
+  const scrollRef = useRef(null);
   const sectionRef = useRef(null);
   const titleRef = useRef(null);
   const containerRef = useRef(null);
   const scrollTriggerRef = useRef(null);
+  const skipSnapUntilRef = useRef(0);
   const metaRef = useRef({ titleFrac: 0, projectCount: 0, stepCount: 0 });
   const scrollDirectionRef = useRef(1);
   const snapStepRef = useRef(0);
@@ -137,18 +140,25 @@ const Projects = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [controlsVisible, setControlsVisible] = useState(false);
 
+  useEffect(() => {
+    scrollRef.current = scroll;
+  }, [scroll]);
+
   const stepToProgress = (step, titleFrac, projectCount) => {
+    const safeTitleFrac = gsap.utils.clamp(0, 0.95, titleFrac);
     if (step <= 0) return 0;
-    if (step === 1) return titleFrac;
-    if (projectCount <= 1) return titleFrac;
+    if (step === 1) return safeTitleFrac;
+    if (projectCount <= 1) return safeTitleFrac;
     const projectIndex = step - 1;
     const normalized = projectIndex / (projectCount - 1);
-    return titleFrac + normalized * (1 - titleFrac);
+    return safeTitleFrac + normalized * (1 - safeTitleFrac);
   };
 
   const progressToNearestProjectIndex = (progress, titleFrac, projectCount) => {
     if (projectCount <= 1) return 0;
-    const hp = (progress - titleFrac) / (1 - titleFrac);
+    const safeTitleFrac = gsap.utils.clamp(0, 0.95, titleFrac);
+    const range = Math.max(MIN_PROGRESS_RANGE, 1 - safeTitleFrac);
+    const hp = (progress - safeTitleFrac) / range;
     const clampedHp = gsap.utils.clamp(0, 1, hp);
     return Math.round(clampedHp * (projectCount - 1));
   };
@@ -192,14 +202,61 @@ const Projects = () => {
     if (!projectEls.length) return;
 
     const mm = gsap.matchMedia();
+    const handleNavProjectsScroll = () => {
+      const st = scrollTriggerRef.current;
+      const scrollProxy = scrollRef.current;
+      const target = st?.start ?? section;
+
+      skipSnapUntilRef.current = Date.now() + 1800;
+      snapStepRef.current = 0;
+      setStep(0);
+
+      if (scrollProxy?.scrollTo) {
+        scrollProxy.scrollTo(target, {
+          offset: 0,
+          duration: 1.1,
+          lock: true,
+          force: true,
+        });
+      } else if (st) {
+        st.scroll(st.start);
+      } else {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+    window.addEventListener("projects:nav-scroll-to-start", handleNavProjectsScroll);
 
     /* ======== DESKTOP – horizontal scroll ======== */
     mm.add(`(min-width: ${MOBILE_BP + 1}px)`, () => {
-      const viewportHeight = getViewportHeight();
-      const scrollDistance = (projectEls.length - 1) * window.innerWidth;
-      const titleScrollPx = viewportHeight * 0.38;
-      const totalEnd = titleScrollPx + scrollDistance;
-      const titleFrac = titleScrollPx / totalEnd;
+      let metrics = {
+        scrollDistance: 0,
+        titleFrac: 0,
+        totalEnd: 1,
+      };
+
+      const computeMetrics = () => {
+        const viewportHeight = getViewportHeight(section);
+        const viewportWidth = Math.max(1, section.clientWidth || window.innerWidth);
+        const fallbackDistance = Math.max(0, (projectEls.length - 1) * viewportWidth);
+        const measuredDistance = Math.max(0, container.scrollWidth - viewportWidth);
+        const scrollDistance =
+          measuredDistance > viewportWidth * 0.25 ? measuredDistance : fallbackDistance;
+        const titleScrollPx = viewportHeight * 0.38;
+        const totalEnd = Math.max(1, titleScrollPx + scrollDistance);
+        const titleFrac = gsap.utils.clamp(0, 0.95, titleScrollPx / totalEnd);
+        return { scrollDistance, titleFrac, totalEnd };
+      };
+
+      const syncMetrics = () => {
+        metrics = computeMetrics();
+        metaRef.current = {
+          titleFrac: metrics.titleFrac,
+          projectCount: projectEls.length,
+          stepCount: projectEls.length + 1,
+        };
+      };
+
+      syncMetrics();
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -207,17 +264,21 @@ const Projects = () => {
           pin: true,
           scrub: 0.08,
           start: "top top",
-          end: () => `+=${totalEnd}`,
+          end: () => `+=${metrics.totalEnd}`,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          onRefreshInit: syncMetrics,
+          onRefresh: syncMetrics,
           onEnter: () => setControlsVisible(true),
           onEnterBack: () => setControlsVisible(true),
           onLeave: () => setControlsVisible(false),
           onLeaveBack: () => setControlsVisible(false),
           snap: {
             snapTo(progress) {
+              if (Date.now() < skipSnapUntilRef.current) return progress;
               const n = projectEls.length;
               const stepCount = n + 1; // 0: title state, 1..n: projects
+              const { titleFrac } = metrics;
               let targetStep = 0;
 
               if (progress <= titleFrac * 0.5) {
@@ -254,6 +315,7 @@ const Projects = () => {
           },
           onUpdate(self) {
             const progress = self.progress;
+            const { titleFrac } = metrics;
             scrollDirectionRef.current = self.direction || scrollDirectionRef.current;
             if (progress < titleFrac * 0.85) setStep(0);
             const idx =
@@ -276,11 +338,6 @@ const Projects = () => {
         },
       });
       scrollTriggerRef.current = tl.scrollTrigger;
-      metaRef.current = {
-        titleFrac,
-        projectCount: projectEls.length,
-        stepCount: projectEls.length + 1,
-      };
       snapStepRef.current = 0;
       setStep(0);
 
@@ -288,25 +345,48 @@ const Projects = () => {
       tl.to(titleEl, {
         xPercent: -120,
         opacity: 0,
-        duration: titleFrac,
+        duration: () => metrics.titleFrac,
         ease: "power2.in",
       });
 
       // Phase 2 – horizontal scroll
       tl.to(container, {
-        x: -scrollDistance,
-        duration: 1 - titleFrac,
+        x: () => -metrics.scrollDistance,
+        duration: () => 1 - metrics.titleFrac,
         ease: "none",
       });
     });
 
     /* ======== MOBILE – vertical scroll with snap ======== */
     mm.add(`(max-width: ${MOBILE_BP}px)`, () => {
-      const viewportHeight = getViewportHeight();
-      const scrollDistance = (projectEls.length - 1) * viewportHeight;
-      const titleScrollPx = viewportHeight * 0.24;
-      const totalEnd = titleScrollPx + scrollDistance;
-      const titleFrac = titleScrollPx / totalEnd;
+      let metrics = {
+        scrollDistance: 0,
+        titleFrac: 0,
+        totalEnd: 1,
+      };
+
+      const computeMetrics = () => {
+        const viewportHeight = getViewportHeight(section);
+        const fallbackDistance = Math.max(0, (projectEls.length - 1) * viewportHeight);
+        const measuredDistance = Math.max(0, container.scrollHeight - viewportHeight);
+        const scrollDistance =
+          measuredDistance > viewportHeight * 0.25 ? measuredDistance : fallbackDistance;
+        const titleScrollPx = viewportHeight * 0.24;
+        const totalEnd = Math.max(1, titleScrollPx + scrollDistance);
+        const titleFrac = gsap.utils.clamp(0, 0.95, titleScrollPx / totalEnd);
+        return { scrollDistance, titleFrac, totalEnd };
+      };
+
+      const syncMetrics = () => {
+        metrics = computeMetrics();
+        metaRef.current = {
+          titleFrac: metrics.titleFrac,
+          projectCount: projectEls.length,
+          stepCount: projectEls.length + 1,
+        };
+      };
+
+      syncMetrics();
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -314,17 +394,21 @@ const Projects = () => {
           pin: true,
           scrub: 0.1,
           start: "top top",
-          end: () => `+=${totalEnd}`,
+          end: () => `+=${metrics.totalEnd}`,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          onRefreshInit: syncMetrics,
+          onRefresh: syncMetrics,
           onEnter: () => setControlsVisible(true),
           onEnterBack: () => setControlsVisible(true),
           onLeave: () => setControlsVisible(false),
           onLeaveBack: () => setControlsVisible(false),
           snap: {
             snapTo(progress) {
+              if (Date.now() < skipSnapUntilRef.current) return progress;
               const n = projectEls.length;
               const stepCount = n + 1;
+              const { titleFrac } = metrics;
               let targetStep = 0;
 
               if (progress <= titleFrac * 0.5) {
@@ -361,6 +445,7 @@ const Projects = () => {
           },
           onUpdate(self) {
             const progress = self.progress;
+            const { titleFrac } = metrics;
             scrollDirectionRef.current = self.direction || scrollDirectionRef.current;
             if (progress < titleFrac * 0.85) {
               setStep(0);
@@ -382,11 +467,6 @@ const Projects = () => {
         },
       });
       scrollTriggerRef.current = tl.scrollTrigger;
-      metaRef.current = {
-        titleFrac,
-        projectCount: projectEls.length,
-        stepCount: projectEls.length + 1,
-      };
       snapStepRef.current = 0;
       setStep(0);
 
@@ -394,19 +474,23 @@ const Projects = () => {
       tl.to(titleEl, {
         yPercent: -120,
         opacity: 0,
-        duration: titleFrac,
+        duration: () => metrics.titleFrac,
         ease: "power2.in",
       });
 
       // Phase 2 – vertical scroll through projects
       tl.to(container, {
-        y: -scrollDistance,
-        duration: 1 - titleFrac,
+        y: () => -metrics.scrollDistance,
+        duration: () => 1 - metrics.titleFrac,
         ease: "none",
       });
     });
 
     return () => {
+      window.removeEventListener(
+        "projects:nav-scroll-to-start",
+        handleNavProjectsScroll
+      );
       mm.revert();
       scrollTriggerRef.current = null;
       metaRef.current = { titleFrac: 0, projectCount: 0, stepCount: 0 };

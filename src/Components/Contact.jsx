@@ -10,14 +10,21 @@ const STICKY_TOPS = [0, 20, 40, 60, 80]; // vh – where each line sticks
 
 const Contact = () => {
   const bgVersion = useSelector((state) => state.UI.bgVersion);
+  const isLight = useSelector((state) => state.UI.isLight);
   const dispatch = useDispatch();
   const sectionRef = useRef(null);
   const smileyRef = useRef(null);
   const socialsRef = useRef(null);
+  const isLightRef = useRef(isLight);
+
+  useEffect(() => {
+    isLightRef.current = isLight;
+  }, [isLight]);
 
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
     const ctx = gsap.context(() => {
       /* ---- sticky "Contact Me" lines ---- */
@@ -98,51 +105,74 @@ const Contact = () => {
         }
       });
 
-      /* ---- theme toggle – fires when the last "Contact Me" stacks ---- */
+      /* ---- theme toggle and fade state ---- */
       const lastTitle = titleDivs[titleDivs.length - 1];
       if (lastTitle) {
+        let isEndStateActive = false;
+        const activationProgress = 0.16;
+
+        const activateEndState = () => {
+          if (isEndStateActive) return;
+          isEndStateActive = true;
+          section.classList.add("scrolled");
+          if (!isLightRef.current) {
+            dispatch(switchThemeMode());
+          }
+          if (endStateScrollTween?.scrollTrigger) {
+            endStateScrollTween.scrollTrigger.disable();
+          }
+          if (endStateInfiniteMarquee) {
+            endStateInfiniteMarquee.kill();
+            endStateInfiniteMarquee = null;
+          }
+          if (endStateLine) {
+            const travel = getMarqueeTravel(endStateLine);
+            gsap.set(endStateLine, { x: 0 });
+            endStateInfiniteMarquee = gsap.to(endStateLine, {
+              x: -travel,
+              duration: isMobile ? 13 : 6.5,
+              ease: "none",
+              repeat: -1,
+              modifiers: {
+                x: (value) => `${gsap.utils.wrap(-travel, 0, Number.parseFloat(value))}px`,
+              },
+            });
+          }
+        };
+
+        const deactivateEndState = () => {
+          if (!isEndStateActive) return;
+          isEndStateActive = false;
+          section.classList.remove("scrolled");
+          if (isLightRef.current) {
+            dispatch(switchThemeMode());
+          }
+          if (endStateInfiniteMarquee) {
+            endStateInfiniteMarquee.kill();
+            endStateInfiniteMarquee = null;
+          }
+          if (endStateScrollTween?.scrollTrigger) {
+            endStateScrollTween.scrollTrigger.enable();
+            endStateScrollTween.scrollTrigger.refresh();
+          }
+          if (endStateLine) {
+            gsap.set(endStateLine, { x: 0 });
+          }
+        };
+
         ScrollTrigger.create({
           trigger: lastTitle,
           start: `top ${STICKY_TOPS[STICKY_TOPS.length - 1]}vh`,
           end: "bottom bottom",
-          onEnter: () => {
-            section.classList.add("scrolled");
-            dispatch(switchThemeMode()); // global .light
-            if (endStateScrollTween?.scrollTrigger) {
-              endStateScrollTween.scrollTrigger.disable();
+          onUpdate: (self) => {
+            if (self.progress >= activationProgress) {
+              activateEndState();
+              return;
             }
-            if (endStateInfiniteMarquee) {
-              endStateInfiniteMarquee.kill();
-              endStateInfiniteMarquee = null;
-            }
-            if (endStateLine) {
-              const travel = getMarqueeTravel(endStateLine);
-              gsap.set(endStateLine, { x: 0 });
-              endStateInfiniteMarquee = gsap.to(endStateLine, {
-                x: -travel,
-                duration: 6.5,
-                ease: "none",
-                repeat: -1,
-                modifiers: {
-                  x: (value) => `${gsap.utils.wrap(-travel, 0, Number.parseFloat(value))}px`,
-                },
-              });
-            }
+            deactivateEndState();
           },
           onLeaveBack: () => {
-            section.classList.remove("scrolled");
-            dispatch(switchThemeMode()); // revert global .light
-            if (endStateInfiniteMarquee) {
-              endStateInfiniteMarquee.kill();
-              endStateInfiniteMarquee = null;
-            }
-            if (endStateScrollTween?.scrollTrigger) {
-              endStateScrollTween.scrollTrigger.enable();
-              endStateScrollTween.scrollTrigger.refresh();
-            }
-            if (endStateLine) {
-              gsap.set(endStateLine, { x: 0 });
-            }
+            deactivateEndState();
           },
         });
       }
@@ -162,9 +192,8 @@ const Contact = () => {
 
       /* ---- smiley parallax ---- */
       if (smileyRef.current) {
-        const mobile = window.matchMedia("(max-width: 768px)").matches;
         gsap.to(smileyRef.current, {
-          x: mobile ? -20 : -200,
+          x: isMobile ? -20 : -200,
           ease: "none",
           scrollTrigger: {
             trigger: smileyRef.current,
@@ -177,9 +206,8 @@ const Contact = () => {
 
       /* ---- socials parallax ---- */
       if (socialsRef.current) {
-        const mobile = window.matchMedia("(max-width: 768px)").matches;
         gsap.to(socialsRef.current, {
-          x: mobile ? 10 : 100,
+          x: isMobile ? 10 : 100,
           ease: "none",
           scrollTrigger: {
             trigger: socialsRef.current,

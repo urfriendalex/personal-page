@@ -3,6 +3,7 @@
 #projects {
   position: relative;
   background: var(--color-dark);
+  z-index: 1;
   --project-card-ratio: 1980 / 1140;
   --project-card-width: min(60vw, calc(var(--full-vh) * 0.8 * 1.3833333333));
   /* height is set dynamically via JS to create scroll space */
@@ -23,7 +24,7 @@
     align-items: center;
     justify-content: center;
     font-size: 20rem;
-    font-family: serif;
+    font-family: "Maragsa";
     -webkit-text-stroke: var(--text-stroke-width) var(--color-max-light);
     text-stroke: var(--text-stroke-width) var(--color-max-light);
     -webkit-text-fill-color: transparent;
@@ -132,6 +133,7 @@
         justify-content: space-between;
         align-items: flex-end;
         gap: 1rem;
+        font-size: 0.95rem;
 
         .project-description {
           overflow: hidden;
@@ -157,8 +159,6 @@
 
         .project-year {
           font-family: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-          font-size: 0.95rem;
-          line-height: 1;
           text-align: right;
           white-space: nowrap;
           color: rgb(255 255 255 / 75%);
@@ -222,6 +222,8 @@
       padding: 0.4rem 0.7rem;
       border-radius: 999px;
       cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       transition: all 0.16s ease;
       backdrop-filter: blur(3px);
 
@@ -266,9 +268,8 @@
       padding: 2rem 6vw calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
 
       .project-links {
-
         a {
-          font-size: 1rem;
+          font-size: 1.75rem;
         }
       }
 
@@ -280,10 +281,10 @@
 
       .project-info {
         margin-left: 0;
-        margin-top: -1.5rem;
+        margin-top: 1rem;
 
         .project-title {
-          font-size: 3rem;
+          font-size: 3.75rem;
 
           span {
             min-width: 0.5rem;
@@ -292,15 +293,8 @@
 
         .project-meta {
           gap: 0.8rem;
-
-          .project-description {
-            font-size: 1.1rem;
-            line-height: 1.5;
-          }
-
-          .project-year {
-            font-size: 0.9rem;
-          }
+          font-size: 1.625rem;
+          line-height: 1.5;
         }
       }
     }

@@ -28,8 +28,13 @@ export default function CustomCursor() {
     const current = { ...target };
 
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-    const getInteractiveLinkTarget = element => {
+    const getLinkTarget = element => {
       const linkTarget = element.closest(LINK_SELECTOR);
+      if (!linkTarget) return null;
+      return linkTarget;
+    };
+    const getMagneticTarget = element => {
+      const linkTarget = getLinkTarget(element);
       if (!linkTarget) return null;
       if (linkTarget.closest(NAV_EXCLUDE_SELECTOR)) return null;
       return linkTarget;
@@ -142,10 +147,12 @@ export default function CustomCursor() {
     const handleMouseOver = event => {
       const targetEl = event.target;
       if (!(targetEl instanceof Element)) return;
-      const linkEl = getInteractiveLinkTarget(targetEl);
+      const linkEl = getLinkTarget(targetEl);
+      const magneticEl = getMagneticTarget(targetEl);
+
       if (linkEl) {
         cursorEl.classList.add("is-hidden");
-        setActiveMagnetic(linkEl);
+        setActiveMagnetic(magneticEl);
       }
     };
 
@@ -154,16 +161,17 @@ export default function CustomCursor() {
       const toEl = event.relatedTarget;
       if (!(fromEl instanceof Element)) return;
 
-      const fromLink = getInteractiveLinkTarget(fromEl);
-      const toLink =
-        toEl instanceof Element ? getInteractiveLinkTarget(toEl) : null;
+      const fromLink = getLinkTarget(fromEl);
+      const toLink = toEl instanceof Element ? getLinkTarget(toEl) : null;
+      const fromMagnetic = getMagneticTarget(fromEl);
+      const toMagnetic = toEl instanceof Element ? getMagneticTarget(toEl) : null;
 
       if (fromLink && !toLink) {
         cursorEl.classList.remove("is-hidden");
       }
 
-      if (fromLink && fromLink !== toLink) {
-        setActiveMagnetic(toLink);
+      if (fromMagnetic !== toMagnetic) {
+        setActiveMagnetic(toMagnetic);
       }
     };
 

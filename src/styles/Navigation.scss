@@ -9,8 +9,8 @@
   flex-direction: column;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s 1.2s ease-in-out, visibility 0s 1.5s linear;
-  -webkit-transition: all 0.3s 1.2s ease-in-out, visibility 0s 1.5s linear;
+  transition: opacity 0.15s ease, visibility 0s 0.15s linear;
+  -webkit-transition: opacity 0.15s ease, visibility 0s 0.15s linear;
 
   &:after {
     content: "";
@@ -26,7 +26,8 @@
   z-index: 1999;
 
   &.active {
-    transition-delay: 0s;
+    transition: opacity 0.3s ease, visibility 0s linear;
+    -webkit-transition: opacity 0.3s ease, visibility 0s linear;
     opacity: 1;
     visibility: visible;
 
@@ -50,14 +51,18 @@
   }
 
   .navItem {
-    font-size: 6rem;
+    font-size: 9rem;
     margin: 2rem;
     font-weight: 400;
-    font-family: seif;
+    font-family: "Maragsa";
     width: 80%;
     display: flex;
     justify-content: left;
     z-index: 2;
+
+    @media (max-width: 768px) {
+      width: 100%;
+    }
 
     a {
       color: transparent;

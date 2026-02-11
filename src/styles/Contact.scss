@@ -6,7 +6,7 @@
   &::after {
     content: "";
     background-image: url("../img/noise02.png");
-    position: absolute;
+    position: fixed;
     height: 100%;
     width: 100%;
     top: 0;
@@ -170,9 +170,10 @@
         }
       }
       a.mail-link {
+        font-family: "Satoshi";
         font-style: italic;
         font-size: 5rem;
-        font-weight: 600;
+        font-weight: 800;
         color: var(--color-dark);
 
         &:hover {
@@ -189,16 +190,19 @@
         position: relative;
         z-index: 4;
         pointer-events: auto;
+
         .text {
           font-size: 4rem;
-          font-family: seif;
+          font-family: serif;
         }
+
         .social-links-list {
           text-align: right;
           display: flex;
           flex-direction: column;
           align-items: flex-end;
           pointer-events: auto;
+          
           .a {
             width: fit-content;
             color: var(--color-dark);
@@ -244,6 +248,10 @@
         transition: 0.3s all ease-in-out;
         color: var(--color-light);
       }
+
+      @media (max-width: 768px) {
+        font-size: 2rem;
+      }
     }
   }
 
@@ -271,7 +279,7 @@
         align-items: baseline;
         font-size: 15rem;
         line-height: 13rem;
-        font-family: seif;
+        font-family: "Maragsa";
         -webkit-text-stroke: var(--text-stroke-width) var(--color-max-light);
         text-stroke: 2px var(--color-max-light);
         -webkit-text-fill-color: transparent;
@@ -283,7 +291,7 @@
         }
 
         @media (max-width: 768px) {
-          font-size: 30rem;
+          font-size: 28rem;
           line-height: 28rem;
         }
       }

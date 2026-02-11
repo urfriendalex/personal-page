@@ -80,15 +80,15 @@
 
     .text {
       font-size: 4rem;
-      font-family: seif;
-      // position: relative;
+      font-family: "Maragsa";
       text-align: center;
       height: 6rem;
     }
 
     .text-1 {
+      font-family: serif;
       span {
-        margin-left: -45%;
+        margin-left: -75%;
       }
     }
     .text-2 {
@@ -114,17 +114,19 @@
     }
     .text-4 {
       font-style: italic;
+      font-family: serif;
       font-size: 5rem;
       margin-left: -30%;
     }
     .text-3,
     .text-2 {
-      font-family: seif;
+      font-family: "Margasa";
       font-weight: 700;
-      -webkit-text-stroke: var(--text-stroke-width) var(--color-max-light);
-      text-stroke: var(--text-stroke-width) var(--color-max-light);
+      -webkit-text-stroke: calc(var(--text-stroke-width) / 2) var(--color-max-light);
+      text-stroke: calc(var(--text-stroke-width) / 2) var(--color-max-light);
       -webkit-text-fill-color: unset;
       text-fill-color: unset;
+
       &:hover {
         -webkit-text-fill-color: transparent;
         text-fill-color: transparent;

@@ -1,7 +1,6 @@
 import React from "react";
 import { splitToSpans } from "./tools/functions.jsx";
 import { useSelector } from "react-redux";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const Navigation = ({ navActive, setNavActive }) => {
   const scroll = useSelector(state => state.scroll.scrollInstance);
@@ -27,17 +26,8 @@ const Navigation = ({ navActive, setNavActive }) => {
           href="#projects"
           onClick={event => {
             event.preventDefault();
-            if (scroll?.scrollTo) {
-              const projectsEl = document.querySelector("#projects");
-              if (projectsEl) {
-                scroll.scrollTo(projectsEl, {
-                  offset: 0,
-                  immediate: true,
-                });
-                requestAnimationFrame(() => ScrollTrigger.refresh());
-              }
-            }
-            setNavActive(!navActive);
+            window.dispatchEvent(new Event("projects:nav-scroll-to-start"));
+            setNavActive(false);
           }}
         >
           <div className="main-text">{splitToSpans("projects", "")}</div>
