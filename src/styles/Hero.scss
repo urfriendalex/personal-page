@@ -46,7 +46,7 @@
       content: "";
       background-image: url("../img/noise02.png");
       position: absolute;
-      height: 110vh;
+      height: calc(var(--full-vh) * 1.1);
       width: 100%;
       position: absolute;
       top: 0;
@@ -138,15 +138,16 @@
     position: absolute;
     right: 3%;
     top: 93%;
+    
     .btn {
       background: transparent;
       border: none;
       transition: 0.3s all ease-in-out;
       color: var(--color-light);
+    }
 
-      @media (max-width: 768px) {
-        font-size: 2rem;
-      }
+    @media (max-width: 768px) {
+      font-size: 2rem;
     }
   }
 }

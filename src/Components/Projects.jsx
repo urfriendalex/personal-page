@@ -10,8 +10,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 const MOBILE_BP = 768;
 const MIN_PROGRESS_RANGE = 0.0001;
-const getViewportHeight = (sectionEl) =>
-  Math.max(1, sectionEl?.clientHeight || window.innerHeight);
+const getViewportHeight = () =>
+  Math.max(1, window.visualViewport?.height || window.innerHeight);
 
 const projects = [
   {
@@ -235,7 +235,7 @@ const Projects = () => {
       };
 
       const computeMetrics = () => {
-        const viewportHeight = getViewportHeight(section);
+        const viewportHeight = getViewportHeight();
         const viewportWidth = Math.max(1, section.clientWidth || window.innerWidth);
         const fallbackDistance = Math.max(0, (projectEls.length - 1) * viewportWidth);
         const measuredDistance = Math.max(0, container.scrollWidth - viewportWidth);
@@ -366,7 +366,7 @@ const Projects = () => {
       };
 
       const computeMetrics = () => {
-        const viewportHeight = getViewportHeight(section);
+        const viewportHeight = getViewportHeight();
         const fallbackDistance = Math.max(0, (projectEls.length - 1) * viewportHeight);
         const measuredDistance = Math.max(0, container.scrollHeight - viewportHeight);
         const scrollDistance =
@@ -486,11 +486,31 @@ const Projects = () => {
       });
     });
 
+    let refreshRafId = null;
+    const refreshViewportDrivenLayout = () => {
+      if (refreshRafId !== null) return;
+      refreshRafId = window.requestAnimationFrame(() => {
+        refreshRafId = null;
+        scrollRef.current?.lenis?.resize?.();
+        ScrollTrigger.refresh();
+      });
+    };
+
+    window.addEventListener("resize", refreshViewportDrivenLayout);
+    window.addEventListener("orientationchange", refreshViewportDrivenLayout);
+    window.visualViewport?.addEventListener("resize", refreshViewportDrivenLayout);
+
     return () => {
       window.removeEventListener(
         "projects:nav-scroll-to-start",
         handleNavProjectsScroll
       );
+      if (refreshRafId !== null) {
+        window.cancelAnimationFrame(refreshRafId);
+      }
+      window.removeEventListener("resize", refreshViewportDrivenLayout);
+      window.removeEventListener("orientationchange", refreshViewportDrivenLayout);
+      window.visualViewport?.removeEventListener("resize", refreshViewportDrivenLayout);
       mm.revert();
       scrollTriggerRef.current = null;
       metaRef.current = { titleFrac: 0, projectCount: 0, stepCount: 0 };

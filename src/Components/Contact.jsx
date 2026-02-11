@@ -14,6 +14,7 @@ const Contact = () => {
   const dispatch = useDispatch();
   const sectionRef = useRef(null);
   const smileyRef = useRef(null);
+  const mailLinkRef = useRef(null);
   const socialsRef = useRef(null);
   const isLightRef = useRef(isLight);
 
@@ -27,6 +28,9 @@ const Contact = () => {
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
     const ctx = gsap.context(() => {
+      const getViewportHeight = () => window.visualViewport?.height || window.innerHeight;
+      const vhToPx = (vhValue) => (getViewportHeight() * vhValue) / 100;
+
       /* ---- sticky "Contact Me" lines ---- */
       const titleDivs = gsap.utils.toArray(".section-title", section);
       let endStateInfiniteMarquee = null;
@@ -59,11 +63,11 @@ const Contact = () => {
 
         ScrollTrigger.create({
           trigger: titleDiv,
-          start: `top ${stickyTop}vh`,
-          end: `bottom ${stickyTop}vh`,
+          start: () => `top ${vhToPx(stickyTop)}px`,
+          end: () => `bottom ${vhToPx(stickyTop)}px`,
           onEnter: () => {
             line.style.position = "fixed";
-            line.style.top = `${stickyTop}vh`;
+            line.style.top = `${vhToPx(stickyTop)}px`;
             line.style.left = "50%";
           },
           onLeave: () => {
@@ -73,7 +77,7 @@ const Contact = () => {
           },
           onEnterBack: () => {
             line.style.position = "fixed";
-            line.style.top = `${stickyTop}vh`;
+            line.style.top = `${vhToPx(stickyTop)}px`;
             line.style.left = "50%";
           },
           onLeaveBack: () => {
@@ -92,8 +96,8 @@ const Contact = () => {
             ease: "none",
             scrollTrigger: {
               trigger: titleDiv,
-              start: `top ${stickyTop}vh`,
-              end: `bottom ${stickyTop}vh`,
+              start: () => `top ${vhToPx(stickyTop)}px`,
+              end: () => `bottom ${vhToPx(stickyTop)}px`,
               scrub: true,
               invalidateOnRefresh: true,
             },
@@ -162,7 +166,7 @@ const Contact = () => {
 
         ScrollTrigger.create({
           trigger: lastTitle,
-          start: `top ${STICKY_TOPS[STICKY_TOPS.length - 1]}vh`,
+          start: () => `top ${vhToPx(STICKY_TOPS[STICKY_TOPS.length - 1])}px`,
           end: "bottom bottom",
           onUpdate: (self) => {
             if (self.progress >= activationProgress) {
@@ -190,10 +194,46 @@ const Contact = () => {
         });
       }
 
+      if (mailLinkRef.current) {
+        gsap.fromTo(
+          mailLinkRef.current,
+          { xPercent: -22, autoAlpha: 0 },
+          {
+            xPercent: 0,
+            autoAlpha: 1,
+            duration: isMobile ? 0.75 : 0.95,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: detailsScroll || mailLinkRef.current,
+              start: isMobile ? "top 95%" : "top 85%",
+              toggleActions: "play none none reverse",
+            },
+          }
+        );
+      }
+
+      if (socialsRef.current) {
+        gsap.fromTo(
+          socialsRef.current,
+          { xPercent: 24, autoAlpha: 0 },
+          {
+            xPercent: 0,
+            autoAlpha: 1,
+            duration: isMobile ? 0.75 : 0.95,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: detailsScroll || socialsRef.current,
+              start: isMobile ? "top 95%" : "top 85%",
+              toggleActions: "play none none reverse",
+            },
+          }
+        );
+      }
+
       /* ---- smiley parallax ---- */
       if (smileyRef.current) {
         gsap.to(smileyRef.current, {
-          x: isMobile ? -20 : -200,
+          x: isMobile ? -60 : -200,
           ease: "none",
           scrollTrigger: {
             trigger: smileyRef.current,
@@ -207,7 +247,7 @@ const Contact = () => {
       /* ---- socials parallax ---- */
       if (socialsRef.current) {
         gsap.to(socialsRef.current, {
-          x: isMobile ? 10 : 100,
+          x: isMobile ? 40 : 100,
           ease: "none",
           scrollTrigger: {
             trigger: socialsRef.current,
@@ -219,7 +259,15 @@ const Contact = () => {
       }
     }, section);
 
-    return () => ctx.revert();
+    const refreshOnViewportChange = () => ScrollTrigger.refresh();
+    window.addEventListener("orientationchange", refreshOnViewportChange);
+    window.visualViewport?.addEventListener("resize", refreshOnViewportChange);
+
+    return () => {
+      window.removeEventListener("orientationchange", refreshOnViewportChange);
+      window.visualViewport?.removeEventListener("resize", refreshOnViewportChange);
+      ctx.revert();
+    };
   }, [dispatch]);
 
   return (
@@ -244,6 +292,7 @@ const Contact = () => {
         <div className="contact-details-wrapper">
           <div className="mail-link-wrapper">
             <a
+              ref={mailLinkRef}
               className="mail-link link link-underline"
               href="mailto:alex.yansons@gmail.com"
             >
