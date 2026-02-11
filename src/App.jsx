@@ -23,6 +23,39 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const root = document.documentElement;
+    let rafId = null;
+    const mobileMediaQuery = window.matchMedia("(max-width: 768px)");
+
+    const applyStableViewportHeight = () => {
+      rafId = null;
+      root.style.setProperty("--full-vh", `${window.innerHeight}px`);
+    };
+
+    const scheduleViewportUpdate = () => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(applyStableViewportHeight);
+    };
+
+    const handleWindowResize = () => {
+      if (mobileMediaQuery.matches) return;
+      scheduleViewportUpdate();
+    };
+
+    scheduleViewportUpdate();
+    window.addEventListener("orientationchange", scheduleViewportUpdate);
+    window.addEventListener("resize", handleWindowResize);
+
+    return () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+      window.removeEventListener("orientationchange", scheduleViewportUpdate);
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, []);
+
+  useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
       setIsPageReady(true);

@@ -3,19 +3,28 @@
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Observer } from "gsap/Observer";
 import { splitToSpans } from "./tools/functions.jsx";
 import { useSelector } from "react-redux";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, Observer);
 
 const MOBILE_BP = 768;
 const MIN_PROGRESS_RANGE = 0.0001;
-const MOBILE_VIEWPORT_REFRESH_DELTA_PX = 96;
-const VIEWPORT_REFRESH_DEBOUNCE_MS = 260;
 const FIRST_PROJECT_STEP = 1;
 const MOBILE_TRAILING_SPACE_VH = 0.18;
-const getViewportHeight = () =>
-  Math.max(1, window.visualViewport?.height || window.innerHeight);
+const MOBILE_STEP_GESTURE_COOLDOWN_MS = 420;
+const getViewportHeight = () => {
+  const rawVhValue = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--full-vh")
+    .trim();
+  const parsedPx = Number.parseFloat(rawVhValue);
+  if (rawVhValue.endsWith("px") && Number.isFinite(parsedPx)) {
+    return Math.max(1, parsedPx);
+  }
+  return Math.max(1, window.innerHeight);
+};
 
 const projects = [
   {
@@ -409,6 +418,9 @@ const Projects = () => {
         projectEndFrac: 1,
         totalEnd: 1,
       };
+      let isSectionActive = false;
+      let gestureObserver = null;
+      let lockedUntilTs = 0;
 
       const computeMetrics = () => {
         const viewportHeight = getViewportHeight();
@@ -441,6 +453,70 @@ const Projects = () => {
 
       syncMetrics();
 
+      const setInteractionLock = enabled => {
+        isSectionActive = enabled;
+        if (!gestureObserver) return;
+        if (enabled) {
+          gestureObserver.enable();
+          return;
+        }
+        gestureObserver.disable();
+      };
+
+      const moveByGesture = delta => {
+        if (!isSectionActive) return;
+        if (Date.now() < lockedUntilTs) return;
+        lockedUntilTs = Date.now() + MOBILE_STEP_GESTURE_COOLDOWN_MS;
+
+        const st = scrollTriggerRef.current;
+        const scrollProxy = scrollRef.current;
+        const { stepCount } = metaRef.current;
+        if (!st || !stepCount) return;
+
+        const maxStep = stepCount - 1;
+        const currentStep = activeStepRef.current;
+        const movingForward = delta > 0;
+
+        if (movingForward && currentStep < maxStep) {
+          scrollToProjectStep(currentStep + 1);
+          return;
+        }
+
+        if (!movingForward && currentStep > FIRST_PROJECT_STEP) {
+          scrollToProjectStep(currentStep - 1);
+          return;
+        }
+
+        // When user swipes beyond bounds, programmatically escape the pinned section.
+        const boundaryTarget = movingForward
+          ? st.end + 2
+          : st.start - getViewportHeight() * 0.35;
+        skipSnapUntilRef.current = Date.now() + 420;
+        if (scrollProxy?.scrollTo) {
+          scrollProxy.scrollTo(boundaryTarget, {
+            duration: 0.35,
+            lock: true,
+            force: true,
+          });
+        } else {
+          st.scroll(boundaryTarget);
+        }
+      };
+
+      gestureObserver = Observer.create({
+        target: section,
+        type: "wheel,touch",
+        preventDefault: true,
+        ignore: "a,button",
+        tolerance: 12,
+        onChangeY(self) {
+          if (!isSectionActive) return;
+          if (Math.abs(self.deltaY) < 10) return;
+          moveByGesture(self.deltaY);
+        },
+      });
+      gestureObserver.disable();
+
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
@@ -452,10 +528,22 @@ const Projects = () => {
           invalidateOnRefresh: true,
           onRefreshInit: syncMetrics,
           onRefresh: syncMetrics,
-          onEnter: () => setControlsVisible(true),
-          onEnterBack: () => setControlsVisible(true),
-          onLeave: () => setControlsVisible(true),
-          onLeaveBack: () => setControlsVisible(false),
+          onEnter: () => {
+            setControlsVisible(true);
+            setInteractionLock(true);
+          },
+          onEnterBack: () => {
+            setControlsVisible(true);
+            setInteractionLock(true);
+          },
+          onLeave: () => {
+            setControlsVisible(true);
+            setInteractionLock(false);
+          },
+          onLeaveBack: () => {
+            setControlsVisible(false);
+            setInteractionLock(false);
+          },
           snap: {
             snapTo(progress) {
               if (Date.now() < skipSnapUntilRef.current) return progress;
@@ -545,45 +633,30 @@ const Projects = () => {
         duration: () => 1 - metrics.titleFrac,
         ease: "none",
       });
+
+      return () => {
+        setInteractionLock(false);
+        gestureObserver?.kill();
+      };
     });
 
     let refreshRafId = null;
-    let refreshTimeoutId = null;
-    let lastViewportHeight = getViewportHeight();
     const mobileMediaQuery = window.matchMedia(`(max-width: ${MOBILE_BP}px)`);
-
     const refreshViewportDrivenLayout = () => {
       if (refreshRafId !== null) return;
       refreshRafId = window.requestAnimationFrame(() => {
         refreshRafId = null;
-
-        // iOS Safari emits frequent visualViewport resize events while the bar animates.
-        // Debounce and ignore tiny height deltas to avoid refresh-induced jank.
-        const nextViewportHeight = getViewportHeight();
-        const viewportDelta = Math.abs(nextViewportHeight - lastViewportHeight);
-        const shouldRefreshNow =
-          !mobileMediaQuery.matches ||
-          viewportDelta >= MOBILE_VIEWPORT_REFRESH_DELTA_PX;
-
-        if (!shouldRefreshNow) return;
-
-        lastViewportHeight = nextViewportHeight;
-
-        if (refreshTimeoutId !== null) {
-          window.clearTimeout(refreshTimeoutId);
-        }
-
-        refreshTimeoutId = window.setTimeout(() => {
-          refreshTimeoutId = null;
-          scrollRef.current?.lenis?.resize?.();
-          ScrollTrigger.refresh();
-        }, VIEWPORT_REFRESH_DEBOUNCE_MS);
+        scrollRef.current?.lenis?.resize?.();
+        ScrollTrigger.refresh();
       });
     };
+    const handleWindowResize = () => {
+      if (mobileMediaQuery.matches) return;
+      refreshViewportDrivenLayout();
+    };
 
-    window.addEventListener("resize", refreshViewportDrivenLayout);
+    window.addEventListener("resize", handleWindowResize);
     window.addEventListener("orientationchange", refreshViewportDrivenLayout);
-    window.visualViewport?.addEventListener("resize", refreshViewportDrivenLayout);
 
     return () => {
       window.removeEventListener(
@@ -593,12 +666,8 @@ const Projects = () => {
       if (refreshRafId !== null) {
         window.cancelAnimationFrame(refreshRafId);
       }
-      if (refreshTimeoutId !== null) {
-        window.clearTimeout(refreshTimeoutId);
-      }
-      window.removeEventListener("resize", refreshViewportDrivenLayout);
+      window.removeEventListener("resize", handleWindowResize);
       window.removeEventListener("orientationchange", refreshViewportDrivenLayout);
-      window.visualViewport?.removeEventListener("resize", refreshViewportDrivenLayout);
       mm.revert();
       scrollTriggerRef.current = null;
       metaRef.current = {

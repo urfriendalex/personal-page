@@ -6,7 +6,18 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const STICKY_TOPS = [0, 20, 40, 60, 80]; // vh – where each line sticks
+const STICKY_TOPS = [0, 20, 40, 60, 80]; // percentage of stable viewport height
+const getViewportHeight = () => {
+  const rawVhValue = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--full-vh")
+    .trim();
+  const parsedPx = Number.parseFloat(rawVhValue);
+  if (rawVhValue.endsWith("px") && Number.isFinite(parsedPx)) {
+    return Math.max(1, parsedPx);
+  }
+  return Math.max(1, window.innerHeight);
+};
 
 const Contact = () => {
   const bgVersion = useSelector((state) => state.UI.bgVersion);
@@ -26,8 +37,11 @@ const Contact = () => {
     const section = sectionRef.current;
     if (!section) return;
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const mobileMediaQuery = window.matchMedia("(max-width: 768px)");
 
     const ctx = gsap.context(() => {
+      const vhToPx = (vhValue) => (getViewportHeight() * vhValue) / 100;
+
       /* ---- sticky "Contact Me" lines ---- */
       const titleDivs = gsap.utils.toArray(".section-title", section);
       let endStateInfiniteMarquee = null;
@@ -50,7 +64,7 @@ const Contact = () => {
         lineEl.style.left = `${centerX}px`;
 
         gsap.to(lineEl, {
-          top: `${stickyTop}vh`,
+          top: `${vhToPx(stickyTop)}px`,
           left: "50%",
           duration: 0.16,
           ease: "power1.out",
@@ -78,8 +92,8 @@ const Contact = () => {
 
         ScrollTrigger.create({
           trigger: titleDiv,
-          start: `top ${stickyTop}vh`,
-          end: `bottom ${stickyTop}vh`,
+          start: () => `top ${vhToPx(stickyTop)}px`,
+          end: () => `bottom ${vhToPx(stickyTop)}px`,
           onEnter: () => {
             handoffToFixed(line, stickyTop);
           },
@@ -107,8 +121,8 @@ const Contact = () => {
             ease: "none",
             scrollTrigger: {
               trigger: titleDiv,
-              start: `top ${stickyTop}vh`,
-              end: `bottom ${stickyTop}vh`,
+              start: () => `top ${vhToPx(stickyTop)}px`,
+              end: () => `bottom ${vhToPx(stickyTop)}px`,
               scrub: true,
               invalidateOnRefresh: true,
             },
@@ -177,7 +191,7 @@ const Contact = () => {
 
         ScrollTrigger.create({
           trigger: lastTitle,
-          start: `top ${STICKY_TOPS[STICKY_TOPS.length - 1]}vh`,
+          start: () => `top ${vhToPx(STICKY_TOPS[STICKY_TOPS.length - 1])}px`,
           end: "bottom bottom",
           onUpdate: (self) => {
             if (self.progress >= activationProgress) {
@@ -270,7 +284,28 @@ const Contact = () => {
       }
     }, section);
 
+    let refreshRafId = null;
+    const refreshViewportDrivenLayout = () => {
+      if (refreshRafId !== null) return;
+      refreshRafId = window.requestAnimationFrame(() => {
+        refreshRafId = null;
+        ScrollTrigger.refresh();
+      });
+    };
+    const handleWindowResize = () => {
+      if (mobileMediaQuery.matches) return;
+      refreshViewportDrivenLayout();
+    };
+
+    window.addEventListener("orientationchange", refreshViewportDrivenLayout);
+    window.addEventListener("resize", handleWindowResize);
+
     return () => {
+      if (refreshRafId !== null) {
+        window.cancelAnimationFrame(refreshRafId);
+      }
+      window.removeEventListener("orientationchange", refreshViewportDrivenLayout);
+      window.removeEventListener("resize", handleWindowResize);
       ctx.revert();
     };
   }, [dispatch]);
