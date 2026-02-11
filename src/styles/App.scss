@@ -15,18 +15,27 @@
   --color-light: #f7f7ff;
   --text-stroke-width: 2px;
   --full-vh: 100vh;
+  --visible-vh: 100vh;
   --nav-full-vh: 100vh;
 }
 
 @supports (height: 100svh) {
   :root {
     --full-vh: 100svh;
+    --visible-vh: 100svh;
     --nav-full-vh: 100svh;
+  }
+}
+
+@supports (height: 100lvh) {
+  :root {
+    --full-vh: 100lvh;
   }
 }
 
 @supports (height: 100dvh) {
   :root {
+    --visible-vh: 100dvh;
     --nav-full-vh: 100dvh;
   }
 }

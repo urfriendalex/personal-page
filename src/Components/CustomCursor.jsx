@@ -1,12 +1,7 @@
 import React, { useEffect, useRef } from "react";
 
-const LINK_SELECTOR = "a, .link";
-const NAV_EXCLUDE_SELECTOR = ".navFull";
+const LINK_SELECTOR = "a, .link, .projects-control-btn";
 const FOLLOW_EASING = 0.16;
-const MAGNETIC_STRENGTH = 0.22;
-const MAGNETIC_MAX_SHIFT = 14;
-const MAGNETIC_IN_TRANSITION = "transform 120ms ease-out";
-const MAGNETIC_OUT_TRANSITION = "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)";
 
 export default function CustomCursor() {
   const cursorRef = useRef(null);
@@ -21,72 +16,14 @@ export default function CustomCursor() {
 
     let rafId = null;
     let shouldAnimate = false;
-    let activeMagneticEl = null;
-    const magneticBaseStyles = new WeakMap();
 
     const target = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const current = { ...target };
 
-    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
     const getLinkTarget = element => {
       const linkTarget = element.closest(LINK_SELECTOR);
       if (!linkTarget) return null;
       return linkTarget;
-    };
-    const getMagneticTarget = element => {
-      const linkTarget = getLinkTarget(element);
-      if (!linkTarget) return null;
-      if (linkTarget.closest(NAV_EXCLUDE_SELECTOR)) return null;
-      return linkTarget;
-    };
-
-    const setActiveMagnetic = element => {
-      if (activeMagneticEl === element) return;
-
-      if (activeMagneticEl) {
-        const previousEl = activeMagneticEl;
-        const previousStyles = magneticBaseStyles.get(previousEl);
-        previousEl.style.transition = MAGNETIC_OUT_TRANSITION;
-        previousEl.style.transform = previousStyles?.transform ?? "";
-
-        const clearTransition = () => {
-          previousEl.style.transition = previousStyles?.transition ?? "";
-          previousEl.style.willChange = previousStyles?.willChange ?? "";
-          previousEl.removeEventListener("transitionend", clearTransition);
-        };
-
-        previousEl.addEventListener("transitionend", clearTransition);
-      }
-
-      activeMagneticEl = element;
-      if (!activeMagneticEl) return;
-
-      if (!magneticBaseStyles.has(activeMagneticEl)) {
-        magneticBaseStyles.set(activeMagneticEl, {
-          transform: activeMagneticEl.style.transform,
-          transition: activeMagneticEl.style.transition,
-          willChange: activeMagneticEl.style.willChange
-        });
-      }
-
-      activeMagneticEl.style.willChange = "transform";
-      activeMagneticEl.style.transition = MAGNETIC_IN_TRANSITION;
-    };
-
-    const applyMagneticOffset = (element, mouseX, mouseY) => {
-      const rect = element.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const deltaX = mouseX - centerX;
-      const deltaY = mouseY - centerY;
-      const halfW = Math.max(rect.width / 2, 1);
-      const halfH = Math.max(rect.height / 2, 1);
-      const maxShiftX = Math.min(halfW * MAGNETIC_STRENGTH, MAGNETIC_MAX_SHIFT);
-      const maxShiftY = Math.min(halfH * MAGNETIC_STRENGTH, MAGNETIC_MAX_SHIFT);
-      const shiftX = clamp((deltaX / halfW) * maxShiftX, -maxShiftX, maxShiftX);
-      const shiftY = clamp((deltaY / halfH) * maxShiftY, -maxShiftY, maxShiftY);
-
-      element.style.transform = `translate3d(${shiftX}px, ${shiftY}px, 0)`;
     };
 
     const animate = () => {
@@ -119,17 +56,12 @@ export default function CustomCursor() {
       shouldAnimate = true;
       cursorEl.classList.add("is-visible");
 
-      if (activeMagneticEl) {
-        applyMagneticOffset(activeMagneticEl, event.clientX, event.clientY);
-      }
-
       startAnimation();
     };
 
     const hideCursor = () => {
       shouldAnimate = false;
       cursorEl.classList.remove("is-visible");
-      setActiveMagnetic(null);
     };
 
     const handleWindowMouseOut = event => {
@@ -148,11 +80,9 @@ export default function CustomCursor() {
       const targetEl = event.target;
       if (!(targetEl instanceof Element)) return;
       const linkEl = getLinkTarget(targetEl);
-      const magneticEl = getMagneticTarget(targetEl);
 
       if (linkEl) {
         cursorEl.classList.add("is-hidden");
-        setActiveMagnetic(magneticEl);
       }
     };
 
@@ -163,15 +93,9 @@ export default function CustomCursor() {
 
       const fromLink = getLinkTarget(fromEl);
       const toLink = toEl instanceof Element ? getLinkTarget(toEl) : null;
-      const fromMagnetic = getMagneticTarget(fromEl);
-      const toMagnetic = toEl instanceof Element ? getMagneticTarget(toEl) : null;
 
       if (fromLink && !toLink) {
         cursorEl.classList.remove("is-hidden");
-      }
-
-      if (fromMagnetic !== toMagnetic) {
-        setActiveMagnetic(toMagnetic);
       }
     };
 

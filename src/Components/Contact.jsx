@@ -6,18 +6,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const STICKY_TOPS = [0, 20, 40, 60, 80]; // percentage of stable viewport height
-const getViewportHeight = () => {
-  const rawVhValue = window
-    .getComputedStyle(document.documentElement)
-    .getPropertyValue("--full-vh")
-    .trim();
-  const parsedPx = Number.parseFloat(rawVhValue);
-  if (rawVhValue.endsWith("px") && Number.isFinite(parsedPx)) {
-    return Math.max(1, parsedPx);
-  }
-  return Math.max(1, window.innerHeight);
-};
+const STICKY_TOPS_DESKTOP = [0, 20, 40, 60, 80]; // percentage of stable viewport height
+const getViewportHeight = (sectionEl) =>
+  Math.max(1, sectionEl?.clientHeight || document.documentElement.clientHeight || 1);
 
 const Contact = () => {
   const bgVersion = useSelector((state) => state.UI.bgVersion);
@@ -25,7 +16,7 @@ const Contact = () => {
   const dispatch = useDispatch();
   const sectionRef = useRef(null);
   const smileyRef = useRef(null);
-  const mailLinkRef = useRef(null);
+  const mailWrapperRef = useRef(null);
   const socialsRef = useRef(null);
   const isLightRef = useRef(isLight);
 
@@ -40,13 +31,28 @@ const Contact = () => {
     const mobileMediaQuery = window.matchMedia("(max-width: 768px)");
 
     const ctx = gsap.context(() => {
-      const vhToPx = (vhValue) => (getViewportHeight() * vhValue) / 100;
+      const viewportReferenceEl =
+        section.querySelector("#contact-details-scroll") ||
+        section.querySelector(".background-holder") ||
+        document.documentElement;
+      const vhToPx = (vhValue) => (getViewportHeight(viewportReferenceEl) * vhValue) / 100;
 
       /* ---- sticky "Contact Me" lines ---- */
       const titleDivs = gsap.utils.toArray(".section-title", section);
+      const stickyTopGetters = [];
       let endStateInfiniteMarquee = null;
       let endStateScrollTween = null;
       let endStateLine = null;
+      let isEndStateActive = false;
+      let activateEndState = () => {};
+      let deactivateEndState = () => {};
+      const detailsScroll = section.querySelector("#contact-details-scroll");
+      const detailsWrapper = section.querySelector(".contact-details-wrapper");
+      const detailsRevealStartPercent = isMobile ? 84 : 90;
+      const detailsHideBackStartPercent = isMobile ? 52 : 64;
+      let animateDetailsIn = () => {};
+      let animateDetailsOut = () => {};
+      const getDetailsOffsetX = () => Math.round(window.innerWidth * 1.1);
       const getMarqueeTravel = (lineEl) => {
         const unit = lineEl.querySelector(".contact-me-unit");
         if (!unit) return 0;
@@ -55,18 +61,47 @@ const Contact = () => {
         const gap = Number.parseFloat(lineStyles.columnGap || lineStyles.gap || "0") || 0;
         return unitWidth + gap;
       };
-      const handoffToFixed = (lineEl, stickyTop) => {
+      const handoffToFixed = (lineEl, getStickyTopPx) => {
         const rect = lineEl.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
+        const targetTop = `${getStickyTopPx()}px`;
 
+        gsap.killTweensOf(lineEl, "top,left");
         lineEl.style.position = "fixed";
         lineEl.style.top = `${rect.top}px`;
         lineEl.style.left = `${centerX}px`;
-
         gsap.to(lineEl, {
-          top: `${vhToPx(stickyTop)}px`,
+          top: targetTop,
           left: "50%",
           duration: 0.16,
+          ease: "power1.out",
+          overwrite: "auto",
+        });
+      };
+      const releaseFromFixed = (lineEl, { smooth = false } = {}) => {
+        gsap.killTweensOf(lineEl, "top,left,y");
+
+        if (!smooth) {
+          lineEl.style.position = "";
+          lineEl.style.top = "";
+          lineEl.style.left = "";
+          gsap.set(lineEl, { y: 0 });
+          return;
+        }
+
+        // FLIP-style release: keep visual position after switching to absolute,
+        // then ease y back to 0 to avoid the "snap" on scroll-up handoff.
+        const beforeTop = lineEl.getBoundingClientRect().top;
+        lineEl.style.position = "";
+        lineEl.style.top = "";
+        lineEl.style.left = "";
+        const afterTop = lineEl.getBoundingClientRect().top;
+        const deltaY = beforeTop - afterTop;
+
+        gsap.set(lineEl, { y: deltaY });
+        gsap.to(lineEl, {
+          y: 0,
+          duration: isMobile ? 0.18 : 0.14,
           ease: "power1.out",
           overwrite: "auto",
         });
@@ -75,7 +110,17 @@ const Contact = () => {
       titleDivs.forEach((titleDiv, i) => {
         const line = titleDiv.querySelector(".line");
         if (!line) return;
-        const stickyTop = STICKY_TOPS[i];
+        const getStickyTopPx = () => {
+          const defaultTopPx = vhToPx(STICKY_TOPS_DESKTOP[i]);
+          if (!isMobile) return defaultTopPx;
+
+          // Mobile line-height can exceed fixed vh steps; derive a minimum lane gap
+          // from the rendered line to keep rows separated during smooth handoff.
+          const lineHeight = line.getBoundingClientRect().height || defaultTopPx;
+          const minLaneStepPx = lineHeight * 0.84;
+          return Math.max(defaultTopPx, i * minLaneStepPx);
+        };
+        stickyTopGetters[i] = getStickyTopPx;
         const marqueeDirection = i % 2 === 0 ? -1 : 1;
         const isEndStateTitle = i === 0; // section-titlte-scroll-1 is the line visible at the end state
         if (isEndStateTitle) {
@@ -92,23 +137,19 @@ const Contact = () => {
 
         ScrollTrigger.create({
           trigger: titleDiv,
-          start: () => `top ${vhToPx(stickyTop)}px`,
-          end: () => `bottom ${vhToPx(stickyTop)}px`,
+          start: () => `top ${getStickyTopPx()}px`,
+          end: () => `bottom ${getStickyTopPx()}px`,
           onEnter: () => {
-            handoffToFixed(line, stickyTop);
+            handoffToFixed(line, getStickyTopPx);
           },
           onLeave: () => {
-            line.style.position = "";
-            line.style.top = "";
-            line.style.left = "";
+            releaseFromFixed(line, { smooth: false });
           },
           onEnterBack: () => {
-            handoffToFixed(line, stickyTop);
+            handoffToFixed(line, getStickyTopPx);
           },
           onLeaveBack: () => {
-            line.style.position = "";
-            line.style.top = "";
-            line.style.left = "";
+            releaseFromFixed(line, { smooth: true });
           },
         });
 
@@ -121,8 +162,8 @@ const Contact = () => {
             ease: "none",
             scrollTrigger: {
               trigger: titleDiv,
-              start: () => `top ${vhToPx(stickyTop)}px`,
-              end: () => `bottom ${vhToPx(stickyTop)}px`,
+              start: () => `top ${getStickyTopPx()}px`,
+              end: () => `bottom ${getStickyTopPx()}px`,
               scrub: true,
               invalidateOnRefresh: true,
             },
@@ -137,13 +178,22 @@ const Contact = () => {
       /* ---- theme toggle and fade state ---- */
       const lastTitle = titleDivs[titleDivs.length - 1];
       if (lastTitle) {
-        let isEndStateActive = false;
+        const getLastStickyTopPx =
+          stickyTopGetters[stickyTopGetters.length - 1] ||
+          (() => vhToPx(STICKY_TOPS_DESKTOP[STICKY_TOPS_DESKTOP.length - 1]));
         const activationProgress = 0.16;
+        const isDetailsReadyForReveal = () => {
+          if (!detailsScroll) return true;
+          const rect = detailsScroll.getBoundingClientRect();
+          const revealThresholdPx = (window.innerHeight * detailsRevealStartPercent) / 100;
+          return rect.top <= revealThresholdPx && rect.bottom > 0;
+        };
 
-        const activateEndState = () => {
+        activateEndState = () => {
           if (isEndStateActive) return;
           isEndStateActive = true;
           section.classList.add("scrolled");
+          animateDetailsIn();
           if (!isLightRef.current) {
             dispatch(switchThemeMode());
           }
@@ -169,9 +219,10 @@ const Contact = () => {
           }
         };
 
-        const deactivateEndState = () => {
+        deactivateEndState = () => {
           if (!isEndStateActive) return;
           isEndStateActive = false;
+          animateDetailsOut();
           section.classList.remove("scrolled");
           if (isLightRef.current) {
             dispatch(switchThemeMode());
@@ -191,10 +242,10 @@ const Contact = () => {
 
         ScrollTrigger.create({
           trigger: lastTitle,
-          start: () => `top ${vhToPx(STICKY_TOPS[STICKY_TOPS.length - 1])}px`,
+          start: () => `top ${getLastStickyTopPx()}px`,
           end: "bottom bottom",
           onUpdate: (self) => {
-            if (self.progress >= activationProgress) {
+            if (self.progress >= activationProgress && isDetailsReadyForReveal()) {
               activateEndState();
               return;
             }
@@ -207,8 +258,6 @@ const Contact = () => {
       }
 
       /* ---- contact-details sticky ---- */
-      const detailsScroll = section.querySelector("#contact-details-scroll");
-      const detailsWrapper = section.querySelector(".contact-details-wrapper");
       if (detailsScroll && detailsWrapper) {
         ScrollTrigger.create({
           trigger: detailsScroll,
@@ -219,40 +268,100 @@ const Contact = () => {
         });
       }
 
-      if (mailLinkRef.current) {
-        gsap.fromTo(
-          mailLinkRef.current,
-          { xPercent: -22, autoAlpha: 0 },
-          {
-            xPercent: 0,
-            autoAlpha: 1,
-            duration: isMobile ? 0.75 : 0.95,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: detailsScroll || mailLinkRef.current,
-              start: isMobile ? "top 95%" : "top 85%",
-              toggleActions: "play none none reverse",
-            },
-          }
-        );
-      }
+      if (detailsScroll && (mailWrapperRef.current || socialsRef.current)) {
+        const getFromState = () => {
+          const offsetX = getDetailsOffsetX();
+          return {
+            mailX: -offsetX,
+            socialsX: offsetX,
+          };
+        };
 
-      if (socialsRef.current) {
-        gsap.fromTo(
-          socialsRef.current,
-          { xPercent: 24, autoAlpha: 0 },
-          {
-            xPercent: 0,
-            autoAlpha: 1,
-            duration: isMobile ? 0.75 : 0.95,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: detailsScroll || socialsRef.current,
-              start: isMobile ? "top 95%" : "top 85%",
-              toggleActions: "play none none reverse",
-            },
+        if (mailWrapperRef.current) {
+          const { mailX } = getFromState();
+          gsap.set(mailWrapperRef.current, { x: mailX, autoAlpha: 0 });
+        }
+        if (socialsRef.current) {
+          const { socialsX } = getFromState();
+          gsap.set(socialsRef.current, { x: socialsX, autoAlpha: 0 });
+        }
+
+        animateDetailsIn = () => {
+          if (mailWrapperRef.current) {
+            gsap.to(mailWrapperRef.current, {
+              x: 0,
+              autoAlpha: 1,
+              duration: isMobile ? 0.75 : 0.95,
+              ease: "power3.out",
+              overwrite: "auto",
+            });
           }
-        );
+          if (socialsRef.current) {
+            gsap.to(socialsRef.current, {
+              x: 0,
+              autoAlpha: 1,
+              duration: isMobile ? 0.75 : 0.95,
+              ease: "power3.out",
+              overwrite: "auto",
+            });
+          }
+        };
+
+        animateDetailsOut = () => {
+          const { mailX, socialsX } = getFromState();
+
+          if (mailWrapperRef.current) {
+            gsap.to(mailWrapperRef.current, {
+              x: mailX,
+              autoAlpha: 0,
+              duration: isMobile ? 0.55 : 0.7,
+              ease: "power3.in",
+              overwrite: "auto",
+            });
+          }
+          if (socialsRef.current) {
+            gsap.to(socialsRef.current, {
+              x: socialsX,
+              autoAlpha: 0,
+              duration: isMobile ? 0.55 : 0.7,
+              ease: "power3.in",
+              overwrite: "auto",
+            });
+          }
+        };
+
+        ScrollTrigger.create({
+          trigger: detailsScroll,
+          start: `top ${detailsRevealStartPercent}%`,
+          end: "bottom top",
+          onEnter: () => {
+            activateEndState();
+          },
+          onEnterBack: () => {
+            activateEndState();
+          },
+        });
+
+        ScrollTrigger.create({
+          trigger: detailsScroll,
+          start: `top ${detailsHideBackStartPercent}%`,
+          end: "bottom top",
+          onLeaveBack: () => {
+            deactivateEndState();
+          },
+        });
+
+        if (section.classList.contains("scrolled")) {
+          animateDetailsIn();
+        }
+
+        // Programmatic jumps can land directly in the reveal zone and skip
+        // incremental onEnter timing; sync state immediately on setup.
+        const detailsRect = detailsScroll.getBoundingClientRect();
+        const revealThresholdPx = (window.innerHeight * detailsRevealStartPercent) / 100;
+        if (detailsRect.top <= revealThresholdPx && detailsRect.bottom > 0) {
+          activateEndState();
+        }
       }
 
       /* ---- smiley parallax ---- */
@@ -269,19 +378,6 @@ const Contact = () => {
         });
       }
 
-      /* ---- socials parallax ---- */
-      if (socialsRef.current) {
-        gsap.to(socialsRef.current, {
-          x: isMobile ? 40 : 100,
-          ease: "none",
-          scrollTrigger: {
-            trigger: socialsRef.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: true,
-          },
-        });
-      }
     }, section);
 
     let refreshRafId = null;
@@ -330,9 +426,8 @@ const Contact = () => {
       ))}
       <div id="contact-details-scroll">
         <div className="contact-details-wrapper">
-          <div className="mail-link-wrapper">
+          <div ref={mailWrapperRef} className="mail-link-wrapper">
             <a
-              ref={mailLinkRef}
               className="mail-link link link-underline"
               href="mailto:alex.yansons@gmail.com"
             >

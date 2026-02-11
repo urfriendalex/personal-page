@@ -3,28 +3,30 @@
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Observer } from "gsap/Observer";
 import { splitToSpans } from "./tools/functions.jsx";
 import { useSelector } from "react-redux";
 
-gsap.registerPlugin(ScrollTrigger, Observer);
+gsap.registerPlugin(ScrollTrigger);
 
 const MOBILE_BP = 768;
 const MIN_PROGRESS_RANGE = 0.0001;
 const FIRST_PROJECT_STEP = 1;
 const MOBILE_TRAILING_SPACE_VH = 0.18;
-const MOBILE_STEP_GESTURE_COOLDOWN_MS = 420;
-const getViewportHeight = () => {
-  const rawVhValue = window
-    .getComputedStyle(document.documentElement)
-    .getPropertyValue("--full-vh")
-    .trim();
-  const parsedPx = Number.parseFloat(rawVhValue);
-  if (rawVhValue.endsWith("px") && Number.isFinite(parsedPx)) {
-    return Math.max(1, parsedPx);
-  }
-  return Math.max(1, window.innerHeight);
-};
+const MOBILE_STEP_GESTURE_COOLDOWN_MS = 260;
+const MOBILE_STEP_SCROLL_DURATION = 0.82;
+const MOBILE_EXIT_SCROLL_DURATION = 0.62;
+const MOBILE_SKIP_SNAP_MS = 700;
+const MOBILE_ENTRY_SETTLE_MS = 80;
+const MOBILE_WHEEL_DELTA_THRESHOLD = 8;
+const MOBILE_TOUCH_SWIPE_THRESHOLD = 10;
+const MOBILE_RECOVER_DRIFT_THRESHOLD = 0.14;
+const MOBILE_RECOVER_DRIFT_THRESHOLD_BROKEN = 0.04;
+const MOBILE_RECOVER_COOLDOWN_MS = 420;
+const MOBILE_IDLE_RECOVER_DELAY_MS = 220;
+const MOBILE_CAPTURE_BUFFER_VH = 0.4;
+const smoothStepEase = t => 1 - Math.pow(1 - t, 4);
+const getViewportHeight = (sectionEl) =>
+  Math.max(1, sectionEl?.clientHeight || document.documentElement.clientHeight || 1);
 
 const projects = [
   {
@@ -197,7 +199,7 @@ const Projects = () => {
     setActiveStep(step);
   };
 
-  const scrollToStep = (step) => {
+  const scrollToStep = (step, options = {}) => {
     const st = scrollTriggerRef.current;
     const { titleFrac, projectEndFrac, projectCount, stepCount } = metaRef.current;
     if (!st || !projectCount || !stepCount) return;
@@ -212,10 +214,17 @@ const Projects = () => {
     const target = st.start + progress * (st.end - st.start);
 
     if (scroll?.scrollTo) {
+      const {
+        duration = 0.45,
+        lock = true,
+        force = true,
+        easing,
+      } = options;
       scroll.scrollTo(target, {
-        duration: 0.45,
-        lock: true,
-        force: true,
+        duration,
+        lock,
+        force,
+        ...(easing ? { easing } : {}),
       });
     } else {
       st.scroll(target);
@@ -225,12 +234,12 @@ const Projects = () => {
     setStep(clampedStep);
   };
 
-  const scrollToProjectStep = (step) => {
+  const scrollToProjectStep = (step, options = {}) => {
     const { stepCount } = metaRef.current;
     if (!stepCount) return;
     const maxStep = stepCount - 1;
     const projectStep = Math.min(Math.max(step, FIRST_PROJECT_STEP), maxStep);
-    scrollToStep(projectStep);
+    scrollToStep(projectStep, options);
   };
 
   useEffect(() => {
@@ -277,7 +286,7 @@ const Projects = () => {
       };
 
       const computeMetrics = () => {
-        const viewportHeight = getViewportHeight();
+        const viewportHeight = getViewportHeight(section);
         const viewportWidth = Math.max(1, section.clientWidth || window.innerWidth);
         const fallbackDistance = Math.max(0, (projectEls.length - 1) * viewportWidth);
         const measuredDistance = Math.max(0, container.scrollWidth - viewportWidth);
@@ -410,7 +419,7 @@ const Projects = () => {
       });
     });
 
-    /* ======== MOBILE – vertical scroll with snap ======== */
+    /* ======== MOBILE – discrete swipe steps ======== */
     mm.add(`(max-width: ${MOBILE_BP}px)`, () => {
       let metrics = {
         scrollDistance: 0,
@@ -419,11 +428,13 @@ const Projects = () => {
         totalEnd: 1,
       };
       let isSectionActive = false;
-      let gestureObserver = null;
       let lockedUntilTs = 0;
+      let boundaryReleaseUntilTs = 0;
+      let touchStartY = null;
+      let touchGestureConsumed = false;
 
       const computeMetrics = () => {
-        const viewportHeight = getViewportHeight();
+        const viewportHeight = getViewportHeight(section);
         const fallbackDistance = Math.max(0, (projectEls.length - 1) * viewportHeight);
         const measuredDistance = Math.max(0, container.scrollHeight - viewportHeight);
         const projectDistance =
@@ -451,77 +462,181 @@ const Projects = () => {
         };
       };
 
-      syncMetrics();
-
       const setInteractionLock = enabled => {
         isSectionActive = enabled;
-        if (!gestureObserver) return;
-        if (enabled) {
-          gestureObserver.enable();
-          return;
+        section.style.touchAction = enabled ? "none" : "";
+      };
+
+      const isWithinCaptureRange = () => {
+        if (Date.now() < boundaryReleaseUntilTs) return false;
+        const st = scrollTriggerRef.current;
+        if (!st) return false;
+        const current = st.scroll();
+        const buffer = getViewportHeight(section) * MOBILE_CAPTURE_BUFFER_VH;
+        return current >= st.start - buffer && current <= st.end + buffer;
+      };
+
+      const applyRevealState = step => {
+        projectEls.forEach((el, i) => {
+          el.classList.toggle("is-reveal", step > 0 && i === step - 1);
+        });
+      };
+
+      const goToStep = (step, duration = MOBILE_STEP_SCROLL_DURATION) => {
+        const st = scrollTriggerRef.current;
+        const scrollProxy = scrollRef.current;
+        if (!st) return;
+
+        const maxStep = projectEls.length;
+        const clampedStep = gsap.utils.clamp(0, maxStep, step);
+        setStep(clampedStep);
+        snapStepRef.current = clampedStep;
+        applyRevealState(clampedStep);
+
+        const progress = stepToProgress(
+          clampedStep,
+          metrics.titleFrac,
+          metrics.projectEndFrac,
+          projectEls.length
+        );
+        const target = st.start + progress * (st.end - st.start);
+        if (scrollProxy?.scrollTo) {
+          scrollProxy.scrollTo(target, {
+            duration,
+            lock: true,
+            force: true,
+            easing: smoothStepEase,
+          });
+        } else {
+          st.scroll(target);
         }
-        gestureObserver.disable();
+      };
+
+      const exitSection = movingForward => {
+        const st = scrollTriggerRef.current;
+        const scrollProxy = scrollRef.current;
+        if (!st) return;
+        const viewportHeight = getViewportHeight(section);
+        const target = movingForward
+          ? st.end + viewportHeight * 0.7
+          : st.start - viewportHeight * 0.6;
+        setInteractionLock(false);
+        if (scrollProxy?.scrollTo) {
+          scrollProxy.scrollTo(target, {
+            duration: MOBILE_EXIT_SCROLL_DURATION,
+            lock: true,
+            force: true,
+            easing: smoothStepEase,
+          });
+        } else {
+          st.scroll(target);
+        }
       };
 
       const moveByGesture = delta => {
-        if (!isSectionActive) return;
+        if (!isWithinCaptureRange()) return;
         if (Date.now() < lockedUntilTs) return;
         lockedUntilTs = Date.now() + MOBILE_STEP_GESTURE_COOLDOWN_MS;
+        if (!isSectionActive) setInteractionLock(true);
 
-        const st = scrollTriggerRef.current;
-        const scrollProxy = scrollRef.current;
-        const { stepCount } = metaRef.current;
-        if (!st || !stepCount) return;
-
-        const maxStep = stepCount - 1;
         const currentStep = activeStepRef.current;
+        const maxStep = projectEls.length;
         const movingForward = delta > 0;
 
-        if (movingForward && currentStep < maxStep) {
-          scrollToProjectStep(currentStep + 1);
+        if (movingForward) {
+          if (currentStep < maxStep) {
+            goToStep(currentStep + 1);
+            return;
+          }
+          exitSection(true);
           return;
         }
 
-        if (!movingForward && currentStep > FIRST_PROJECT_STEP) {
-          scrollToProjectStep(currentStep - 1);
+        if (currentStep > 0) {
+          goToStep(currentStep - 1);
           return;
         }
-
-        // When user swipes beyond bounds, programmatically escape the pinned section.
-        const boundaryTarget = movingForward
-          ? st.end + 2
-          : st.start - getViewportHeight() * 0.35;
-        skipSnapUntilRef.current = Date.now() + 420;
-        if (scrollProxy?.scrollTo) {
-          scrollProxy.scrollTo(boundaryTarget, {
-            duration: 0.35,
-            lock: true,
-            force: true,
-          });
-        } else {
-          st.scroll(boundaryTarget);
-        }
+        exitSection(false);
       };
 
-      gestureObserver = Observer.create({
-        target: section,
-        type: "wheel,touch",
-        preventDefault: true,
-        ignore: "a,button",
-        tolerance: 12,
-        onChangeY(self) {
-          if (!isSectionActive) return;
-          if (Math.abs(self.deltaY) < 10) return;
-          moveByGesture(self.deltaY);
-        },
-      });
-      gestureObserver.disable();
+      const shouldAllowNativeBoundaryScroll = delta => {
+        const currentStep = activeStepRef.current;
+        const maxStep = projectEls.length;
+        const movingForward = delta > 0;
+        if (movingForward && currentStep >= maxStep) return true;
+        if (!movingForward && currentStep <= 0) return true;
+        return false;
+      };
 
+      const releaseBoundary = delta => {
+        void delta;
+        setInteractionLock(false);
+        // Let the current gesture pass through to native/Lenis scrolling.
+        boundaryReleaseUntilTs = Date.now() + 950;
+        lockedUntilTs = 0;
+      };
+
+      const handleWheel = event => {
+        if (!isWithinCaptureRange()) return;
+        if (shouldAllowNativeBoundaryScroll(event.deltaY)) {
+          releaseBoundary(event.deltaY);
+          return;
+        }
+        event.preventDefault();
+        if (Math.abs(event.deltaY) < MOBILE_WHEEL_DELTA_THRESHOLD) return;
+        moveByGesture(event.deltaY);
+      };
+
+      const handleTouchStart = event => {
+        const firstTouch = event.touches?.[0];
+        if (!firstTouch) return;
+        touchStartY = firstTouch.clientY;
+        touchGestureConsumed = false;
+      };
+
+      const handleTouchMove = event => {
+        if (!isWithinCaptureRange()) return;
+        if (touchGestureConsumed || touchStartY === null) return;
+        const firstTouch = event.touches?.[0];
+        if (!firstTouch) return;
+        const deltaY = touchStartY - firstTouch.clientY;
+        if (shouldAllowNativeBoundaryScroll(deltaY)) {
+          touchGestureConsumed = true;
+          releaseBoundary(deltaY);
+          return;
+        }
+        event.preventDefault();
+        if (Math.abs(deltaY) < MOBILE_TOUCH_SWIPE_THRESHOLD) return;
+        touchGestureConsumed = true;
+        moveByGesture(deltaY);
+      };
+
+      const handleTouchEnd = () => {
+        touchStartY = null;
+        touchGestureConsumed = false;
+      };
+
+      window.addEventListener("wheel", handleWheel, {
+        passive: false,
+        capture: true,
+      });
+      window.addEventListener("touchstart", handleTouchStart, {
+        passive: false,
+        capture: true,
+      });
+      window.addEventListener("touchmove", handleTouchMove, {
+        passive: false,
+        capture: true,
+      });
+      window.addEventListener("touchend", handleTouchEnd, true);
+      window.addEventListener("touchcancel", handleTouchEnd, true);
+
+      syncMetrics();
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
           pin: true,
-          scrub: 0.1,
+          scrub: 0.12,
           start: "top top",
           end: () => `+=${metrics.totalEnd}`,
           anticipatePin: 1,
@@ -531,6 +646,10 @@ const Projects = () => {
           onEnter: () => {
             setControlsVisible(true);
             setInteractionLock(true);
+            if (activeStepRef.current < 0 || activeStepRef.current > projectEls.length) {
+              setStep(0);
+              applyRevealState(0);
+            }
           },
           onEnterBack: () => {
             setControlsVisible(true);
@@ -544,82 +663,33 @@ const Projects = () => {
             setControlsVisible(false);
             setInteractionLock(false);
           },
-          snap: {
-            snapTo(progress) {
-              if (Date.now() < skipSnapUntilRef.current) return progress;
-              const n = projectEls.length;
-              const stepCount = n + 1;
-              const { titleFrac, projectEndFrac } = metrics;
-
-              if (progress > projectEndFrac) return progress;
-              let targetStep = 0;
-
-              if (progress <= titleFrac * 0.5) {
-                targetStep = 0;
-              } else if (progress <= titleFrac) {
-                targetStep = 1;
-              } else {
-                targetStep =
-                  progressToNearestProjectIndex(
-                    progress,
-                    titleFrac,
-                    projectEndFrac,
-                    n
-                  ) + 1;
-              }
-
-              const prevStep = snapStepRef.current;
-              if (targetStep > prevStep + 1) targetStep = prevStep + 1;
-              if (targetStep < prevStep - 1) targetStep = prevStep - 1;
-              targetStep = gsap.utils.clamp(0, stepCount - 1, targetStep);
-
-              if (scrollDirectionRef.current > 0 && targetStep < prevStep) {
-                targetStep = prevStep;
-              } else if (
-                scrollDirectionRef.current < 0 &&
-                targetStep > prevStep
-              ) {
-                targetStep = prevStep;
-              }
-
-              snapStepRef.current = targetStep;
-              return stepToProgress(targetStep, titleFrac, projectEndFrac, n);
-            },
-            duration: { min: 0.12, max: 0.22 },
-            delay: 0,
-            ease: "power2.out",
-            directional: true,
-            inertia: false,
-          },
+          snap: false,
           onUpdate(self) {
             const progress = self.progress;
             const { titleFrac, projectEndFrac } = metrics;
             scrollDirectionRef.current = self.direction || scrollDirectionRef.current;
             if (progress < titleFrac * 0.85) {
               setStep(0);
-              projectEls.forEach(el => el.classList.remove("is-reveal"));
+              applyRevealState(0);
               return;
             }
-
             const idx = progressToNearestProjectIndex(
               progress,
               titleFrac,
               projectEndFrac,
               projectEls.length
             );
-            setStep(idx + 1);
-
-            projectEls.forEach((el, i) => {
-              el.classList.toggle("is-reveal", i === idx);
-            });
+            const nextStep = idx + 1;
+            setStep(nextStep);
+            applyRevealState(nextStep);
           },
         },
       });
       scrollTriggerRef.current = tl.scrollTrigger;
       snapStepRef.current = 0;
       setStep(0);
+      applyRevealState(0);
 
-      // Phase 1 – title scrolls UP on mobile
       tl.to(titleEl, {
         yPercent: -120,
         opacity: 0,
@@ -627,7 +697,6 @@ const Projects = () => {
         ease: "power2.in",
       });
 
-      // Phase 2 – vertical scroll through projects
       tl.to(container, {
         y: () => -metrics.scrollDistance,
         duration: () => 1 - metrics.titleFrac,
@@ -636,7 +705,11 @@ const Projects = () => {
 
       return () => {
         setInteractionLock(false);
-        gestureObserver?.kill();
+        window.removeEventListener("wheel", handleWheel, true);
+        window.removeEventListener("touchstart", handleTouchStart, true);
+        window.removeEventListener("touchmove", handleTouchMove, true);
+        window.removeEventListener("touchend", handleTouchEnd, true);
+        window.removeEventListener("touchcancel", handleTouchEnd, true);
       };
     });
 

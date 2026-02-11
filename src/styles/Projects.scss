@@ -300,7 +300,11 @@
     }
 
     .projects-controls {
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 2rem);
+      bottom: calc(
+        max(0px, var(--full-vh) - var(--visible-vh)) +
+        env(safe-area-inset-bottom, 0px) +
+        2rem
+      );
       gap: 1rem;
 
       .projects-control-btn {
