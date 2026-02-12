@@ -27,6 +27,7 @@
     pointer-events: none;
     will-change: opacity;
     transition: opacity 1s ease-in-out;
+    transform: translateZ(0);
 
     &.active {
       opacity: 1;
@@ -54,6 +55,7 @@
       background-repeat: round;
       opacity: 0.3;
       background-attachment: fixed;
+      transform: translateZ(0);
     }
 
     @keyframes bgChange {
@@ -66,6 +68,16 @@
       }
       75% {
         background-image: url("../img/mesh03.png");
+      }
+    }
+  }
+
+  @media (max-width: 768px), (hover: none), (pointer: coarse) {
+    .background-container {
+      background-attachment: scroll;
+
+      &::after {
+        background-attachment: scroll;
       }
     }
   }

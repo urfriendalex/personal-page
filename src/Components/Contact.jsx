@@ -49,10 +49,7 @@ const Contact = () => {
       const detailsScroll = section.querySelector("#contact-details-scroll");
       const detailsWrapper = section.querySelector(".contact-details-wrapper");
       const detailsRevealStartPercent = isMobile ? 50 : 60;
-      const detailsHideBackPercent = Math.max(
-        isMobile ? 30 : 40,
-        detailsRevealStartPercent - (isMobile ? 16 : 14)
-      );
+      const detailsHideBackProgress = isMobile ? 0.22 : 0.18;
       let animateDetailsIn = () => {};
       let animateDetailsOut = () => {};
       const getDetailsOffsetX = () => Math.round(window.innerWidth * 1.1);
@@ -352,10 +349,11 @@ const Contact = () => {
           const revealThresholdPx = (window.innerHeight * detailsRevealStartPercent) / 100;
           return detailsRect.top <= revealThresholdPx && detailsRect.bottom > 0;
         };
-        const shouldHideDetailsOnBackScroll = () => {
-          const detailsRect = detailsScroll.getBoundingClientRect();
-          const hideThresholdPx = (window.innerHeight * detailsHideBackPercent) / 100;
-          return detailsRect.top > hideThresholdPx || detailsRect.bottom <= 0;
+        const shouldHideDetailsOnBackScroll = (scrollState) => {
+          if (!scrollState || scrollState.direction >= 0) return false;
+          const velocity = typeof scrollState.getVelocity === "function" ? scrollState.getVelocity() : 0;
+          const isActualUpwardScroll = velocity < -10;
+          return isActualUpwardScroll && scrollState.progress <= detailsHideBackProgress;
         };
 
         ScrollTrigger.create({
@@ -363,8 +361,8 @@ const Contact = () => {
           start: `top ${detailsRevealStartPercent}%`,
           end: "bottom top",
           onEnter: animateDetailsIn,
-          onEnterBack: () => {
-            if (!shouldHideDetailsOnBackScroll() && isDetailsInRevealZone()) {
+          onEnterBack: (self) => {
+            if (!shouldHideDetailsOnBackScroll(self) && isDetailsInRevealZone()) {
               animateDetailsIn();
               return;
             }
@@ -375,7 +373,7 @@ const Contact = () => {
               animateDetailsIn();
               return;
             }
-            if (self.direction < 0 && shouldHideDetailsOnBackScroll()) {
+            if (shouldHideDetailsOnBackScroll(self)) {
               animateDetailsOut();
             }
           },

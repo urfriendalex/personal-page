@@ -272,7 +272,7 @@
     @media (max-width: 768px) {
       .contact-details-wrapper {
         // Reserve vertical space equal to the mobile "Contact Me" lane.
-        padding-top: max(30rem, calc(env(safe-area-inset-top, 0rem) + 1rem));
+        padding-top: max(26rem, calc(env(safe-area-inset-top, 0rem) + 1rem));
         padding-bottom: calc(env(safe-area-inset-bottom, 0rem) + 4dvh);
         justify-content: flex-start;
         gap: 2rem;

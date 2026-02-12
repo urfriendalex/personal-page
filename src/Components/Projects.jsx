@@ -251,6 +251,8 @@ const Projects = () => {
     if (!projectEls.length) return;
     let stableMobileViewportHeight = null;
     let lastViewportWidth = 0;
+    let lastVisibleViewportHeight = null;
+    let lastViewportOcclusion = null;
 
     const syncMobileViewportVars = ({ resetStable = false } = {}) => {
       const visualViewport = window.visualViewport;
@@ -282,9 +284,17 @@ const Projects = () => {
       }
 
       const occlusion = Math.max(0, stableMobileViewportHeight - visibleHeight);
-      section.style.setProperty("--projects-stable-vh", `${stableMobileViewportHeight}px`);
-      section.style.setProperty("--projects-visible-vh", `${visibleHeight}px`);
-      section.style.setProperty("--projects-viewport-occlusion", `${Math.round(occlusion)}px`);
+      if (prevStable !== stableMobileViewportHeight) {
+        section.style.setProperty("--projects-stable-vh", `${stableMobileViewportHeight}px`);
+      }
+      if (lastVisibleViewportHeight !== visibleHeight) {
+        section.style.setProperty("--projects-visible-vh", `${visibleHeight}px`);
+        lastVisibleViewportHeight = visibleHeight;
+      }
+      if (lastViewportOcclusion !== occlusion) {
+        section.style.setProperty("--projects-viewport-occlusion", `${Math.round(occlusion)}px`);
+        lastViewportOcclusion = occlusion;
+      }
 
       lastViewportWidth = viewportWidth;
       return prevStable !== stableMobileViewportHeight;
@@ -827,7 +837,6 @@ const Projects = () => {
     window.addEventListener("resize", handleWindowResize);
     window.addEventListener("orientationchange", handleOrientationChange);
     window.visualViewport?.addEventListener("resize", handleVisualViewportResize);
-    window.visualViewport?.addEventListener("scroll", handleVisualViewportResize);
 
     return () => {
       window.removeEventListener(
@@ -840,7 +849,6 @@ const Projects = () => {
       window.removeEventListener("resize", handleWindowResize);
       window.removeEventListener("orientationchange", handleOrientationChange);
       window.visualViewport?.removeEventListener("resize", handleVisualViewportResize);
-      window.visualViewport?.removeEventListener("scroll", handleVisualViewportResize);
       mm.revert();
       section.style.removeProperty("--projects-stable-vh");
       section.style.removeProperty("--projects-visible-vh");
