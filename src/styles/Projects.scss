@@ -3,16 +3,23 @@
 #projects {
   position: relative;
   background: var(--color-dark);
+  background:red;
   z-index: 1;
   --project-card-ratio: 1980 / 1140;
-  --project-card-width: min(60vw, calc(var(--full-vh) * 0.8 * 1.3833333333));
+  --projects-stable-vh: var(--full-vh);
+  --projects-visible-vh: var(--visible-vh);
+  --projects-viewport-occlusion: max(
+    0px,
+    calc(var(--projects-stable-vh) - var(--projects-visible-vh))
+  );
+  --project-card-width: min(60vw, calc(var(--projects-stable-vh) * 0.8 * 1.3833333333));
   /* height is set dynamically via JS to create scroll space */
 
   /* Sticky inner wrapper – stays in viewport while scrolling through section */
   .projects-sticky {
     position: relative;
     width: 100%;
-    height: var(--full-vh);
+    height: var(--projects-stable-vh);
     overflow: hidden;
   }
 
@@ -41,7 +48,7 @@
     flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-start;
-    height: var(--full-vh);
+    height: var(--projects-stable-vh);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -54,7 +61,7 @@
     flex: 0 0 100vw;
     width: 100vw;
     min-width: 100vw;
-    height: var(--full-vh);
+    height: var(--projects-stable-vh);
     box-sizing: border-box;
     padding: 0 5vw;
     display: flex;
@@ -244,7 +251,7 @@
 @media (max-width: 768px) {
   #projects {
     overflow: hidden;
-    --project-card-width: min(86vw, calc(var(--full-vh) * 0.44 * 1.3833333333));
+    --project-card-width: min(86vw, calc(var(--projects-stable-vh) * 0.44 * 1.3833333333));
 
     /* Keep the title centered over the first project, like desktop */
     .projects-title {
@@ -257,14 +264,14 @@
     /* vertical stack instead of horizontal row */
     .projects-container {
       flex-direction: column;
-      height: var(--full-vh);
+      height: var(--projects-stable-vh);
       align-items: stretch;
     }
 
     .project-wrapper {
-      flex: 0 0 var(--full-vh);
+      flex: 0 0 var(--projects-stable-vh);
       width: 100%;
-      height: var(--full-vh);
+      height: var(--projects-stable-vh);
       padding: 2rem 6vw calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
 
       .project-links {
@@ -300,11 +307,7 @@
     }
 
     .projects-controls {
-      bottom: calc(
-        max(0px, var(--full-vh) - var(--visible-vh)) +
-        env(safe-area-inset-bottom, 0px) +
-        2rem
-      );
+      bottom: calc(var(--projects-viewport-occlusion) + env(safe-area-inset-bottom, 0px) + 2rem);
       gap: 1rem;
 
       .projects-control-btn {

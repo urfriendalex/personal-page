@@ -20,6 +20,7 @@ const MOBILE_ENTRY_SETTLE_MS = 80;
 const MOBILE_WHEEL_DELTA_THRESHOLD = 8;
 const MOBILE_TOUCH_SWIPE_THRESHOLD = 10;
 const MOBILE_CAPTURE_BUFFER_VH = 0.4;
+const MOBILE_VIEWPORT_WIDTH_RESET_PX = 90;
 const smoothStepEase = t => 1 - Math.pow(1 - t, 4);
 const getViewportHeight = (sectionEl) =>
   Math.max(1, sectionEl?.clientHeight || document.documentElement.clientHeight || 1);
@@ -248,6 +249,48 @@ const Projects = () => {
 
     const projectEls = gsap.utils.toArray(".project-wrapper", container);
     if (!projectEls.length) return;
+    let stableMobileViewportHeight = null;
+    let lastViewportWidth = 0;
+
+    const syncMobileViewportVars = ({ resetStable = false } = {}) => {
+      const visualViewport = window.visualViewport;
+      const rawVisibleHeight =
+        visualViewport?.height ||
+        window.innerHeight ||
+        document.documentElement.clientHeight ||
+        section.clientHeight ||
+        1;
+      const rawViewportWidth =
+        visualViewport?.width ||
+        window.innerWidth ||
+        document.documentElement.clientWidth ||
+        section.clientWidth ||
+        1;
+      const visibleHeight = Math.max(1, Math.round(rawVisibleHeight));
+      const viewportWidth = Math.max(1, Math.round(rawViewportWidth));
+      const prevStable = stableMobileViewportHeight;
+      const widthJumped =
+        lastViewportWidth > 0 &&
+        Math.abs(viewportWidth - lastViewportWidth) > MOBILE_VIEWPORT_WIDTH_RESET_PX;
+
+      if (resetStable || stableMobileViewportHeight === null || widthJumped) {
+        stableMobileViewportHeight = visibleHeight;
+      } else {
+        // Safari/in-app browsers can start with a shorter viewport before toolbars collapse.
+        // Keep the largest observed mobile viewport to avoid locking a too-short section.
+        stableMobileViewportHeight = Math.max(stableMobileViewportHeight, visibleHeight);
+      }
+
+      const occlusion = Math.max(0, stableMobileViewportHeight - visibleHeight);
+      section.style.setProperty("--projects-stable-vh", `${stableMobileViewportHeight}px`);
+      section.style.setProperty("--projects-visible-vh", `${visibleHeight}px`);
+      section.style.setProperty("--projects-viewport-occlusion", `${Math.round(occlusion)}px`);
+
+      lastViewportWidth = viewportWidth;
+      return prevStable !== stableMobileViewportHeight;
+    };
+
+    syncMobileViewportVars({ resetStable: true });
 
     const mm = gsap.matchMedia();
     const handleNavProjectsScroll = () => {
@@ -433,10 +476,12 @@ const Projects = () => {
 
       const computeMetrics = () => {
         const viewportHeight = getViewportHeight(section);
-        const fallbackDistance = Math.max(0, (projectEls.length - 1) * viewportHeight);
-        const measuredDistance = Math.max(0, container.scrollHeight - viewportHeight);
-        const projectDistance =
-          measuredDistance > viewportHeight * 0.25 ? measuredDistance : fallbackDistance;
+        const measuredStepHeight = projectEls.reduce((maxHeight, el) => {
+          const itemHeight = Math.round(el.getBoundingClientRect().height || 0);
+          return Math.max(maxHeight, itemHeight);
+        }, 0);
+        const projectStepHeight = Math.max(viewportHeight, measuredStepHeight);
+        const projectDistance = Math.max(0, (projectEls.length - 1) * projectStepHeight);
         const trailingSpace = viewportHeight * MOBILE_TRAILING_SPACE_VH;
         const scrollDistance = projectDistance + trailingSpace;
         const titleScrollPx = viewportHeight * 0.24;
@@ -754,17 +799,35 @@ const Projects = () => {
       if (refreshRafId !== null) return;
       refreshRafId = window.requestAnimationFrame(() => {
         refreshRafId = null;
+        syncMobileViewportVars();
         scrollRef.current?.lenis?.resize?.();
         ScrollTrigger.refresh();
       });
     };
     const handleWindowResize = () => {
-      if (mobileMediaQuery.matches) return;
+      if (mobileMediaQuery.matches) {
+        const stableHeightChanged = syncMobileViewportVars();
+        if (stableHeightChanged) refreshViewportDrivenLayout();
+        return;
+      }
       refreshViewportDrivenLayout();
+    };
+    const handleOrientationChange = () => {
+      if (mobileMediaQuery.matches) {
+        syncMobileViewportVars({ resetStable: true });
+      }
+      refreshViewportDrivenLayout();
+    };
+    const handleVisualViewportResize = () => {
+      if (!mobileMediaQuery.matches) return;
+      const stableHeightChanged = syncMobileViewportVars();
+      if (stableHeightChanged) refreshViewportDrivenLayout();
     };
 
     window.addEventListener("resize", handleWindowResize);
-    window.addEventListener("orientationchange", refreshViewportDrivenLayout);
+    window.addEventListener("orientationchange", handleOrientationChange);
+    window.visualViewport?.addEventListener("resize", handleVisualViewportResize);
+    window.visualViewport?.addEventListener("scroll", handleVisualViewportResize);
 
     return () => {
       window.removeEventListener(
@@ -775,8 +838,13 @@ const Projects = () => {
         window.cancelAnimationFrame(refreshRafId);
       }
       window.removeEventListener("resize", handleWindowResize);
-      window.removeEventListener("orientationchange", refreshViewportDrivenLayout);
+      window.removeEventListener("orientationchange", handleOrientationChange);
+      window.visualViewport?.removeEventListener("resize", handleVisualViewportResize);
+      window.visualViewport?.removeEventListener("scroll", handleVisualViewportResize);
       mm.revert();
+      section.style.removeProperty("--projects-stable-vh");
+      section.style.removeProperty("--projects-visible-vh");
+      section.style.removeProperty("--projects-viewport-occlusion");
       scrollTriggerRef.current = null;
       metaRef.current = {
         titleFrac: 0,
