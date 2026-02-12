@@ -256,19 +256,36 @@ const Projects = () => {
 
     const syncMobileViewportVars = ({ resetStable = false } = {}) => {
       const visualViewport = window.visualViewport;
-      const rawVisibleHeight =
-        visualViewport?.height ||
-        window.innerHeight ||
-        document.documentElement.clientHeight ||
-        section.clientHeight ||
-        1;
+      const visualViewportHeight = Math.max(0, Math.round(visualViewport?.height || 0));
+      const layoutViewportHeight =
+        Math.max(
+          1,
+          Math.round(
+            window.innerHeight ||
+            document.documentElement.clientHeight ||
+            section.clientHeight ||
+            1
+          )
+        );
+      const renderedSectionHeight = Math.max(
+        1,
+        Math.round(section.getBoundingClientRect().height || 0)
+      );
+      const visibleHeight = Math.max(
+        1,
+        visualViewportHeight || layoutViewportHeight || renderedSectionHeight
+      );
+      const stableSeedHeight = Math.max(
+        visibleHeight,
+        layoutViewportHeight,
+        renderedSectionHeight
+      );
       const rawViewportWidth =
         visualViewport?.width ||
         window.innerWidth ||
         document.documentElement.clientWidth ||
         section.clientWidth ||
         1;
-      const visibleHeight = Math.max(1, Math.round(rawVisibleHeight));
       const viewportWidth = Math.max(1, Math.round(rawViewportWidth));
       const prevStable = stableMobileViewportHeight;
       const widthJumped =
@@ -276,11 +293,7 @@ const Projects = () => {
         Math.abs(viewportWidth - lastViewportWidth) > MOBILE_VIEWPORT_WIDTH_RESET_PX;
 
       if (resetStable || stableMobileViewportHeight === null || widthJumped) {
-        stableMobileViewportHeight = visibleHeight;
-      } else {
-        // Safari/in-app browsers can start with a shorter viewport before toolbars collapse.
-        // Keep the largest observed mobile viewport to avoid locking a too-short section.
-        stableMobileViewportHeight = Math.max(stableMobileViewportHeight, visibleHeight);
+        stableMobileViewportHeight = stableSeedHeight;
       }
 
       const occlusion = Math.max(0, stableMobileViewportHeight - visibleHeight);

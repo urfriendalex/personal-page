@@ -195,6 +195,10 @@ const Contact = () => {
           if (!isLightRef.current) {
             dispatch(switchThemeMode());
           }
+          const handoffX =
+            endStateLine != null
+              ? Number.parseFloat(gsap.getProperty(endStateLine, "x")) || 0
+              : 0;
           if (endStateScrollTween?.scrollTrigger) {
             endStateScrollTween.scrollTrigger.disable();
           }
@@ -204,14 +208,18 @@ const Contact = () => {
           }
           if (endStateLine) {
             const travel = getMarqueeTravel(endStateLine);
-            gsap.set(endStateLine, { x: 0 });
+            const wrapX = gsap.utils.wrap(-travel, 0);
+            const normalizedX = wrapX(handoffX);
+
+            // Preserve the exact visual handoff position, then continue as a wrapped loop.
+            gsap.set(endStateLine, { x: normalizedX });
             endStateInfiniteMarquee = gsap.to(endStateLine, {
-              x: -travel,
+              x: `-=${travel}`,
               duration: isMobile ? 13 : 6.5,
               ease: "none",
               repeat: -1,
               modifiers: {
-                x: (value) => `${gsap.utils.wrap(-travel, 0, Number.parseFloat(value))}px`,
+                x: (value) => `${wrapX(Number.parseFloat(value))}px`,
               },
             });
           }
@@ -231,9 +239,6 @@ const Contact = () => {
           if (endStateScrollTween?.scrollTrigger) {
             endStateScrollTween.scrollTrigger.enable();
             endStateScrollTween.scrollTrigger.refresh();
-          }
-          if (endStateLine) {
-            gsap.set(endStateLine, { x: 0 });
           }
         };
 
