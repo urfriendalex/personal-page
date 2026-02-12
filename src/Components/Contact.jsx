@@ -15,7 +15,6 @@ const Contact = () => {
   const isLight = useSelector((state) => state.UI.isLight);
   const dispatch = useDispatch();
   const sectionRef = useRef(null);
-  const smileyRef = useRef(null);
   const mailWrapperRef = useRef(null);
   const socialsRef = useRef(null);
   const isLightRef = useRef(isLight);
@@ -49,7 +48,6 @@ const Contact = () => {
       const detailsScroll = section.querySelector("#contact-details-scroll");
       const detailsWrapper = section.querySelector(".contact-details-wrapper");
       const detailsRevealStartPercent = isMobile ? 50 : 60;
-      const detailsHideBackProgress = isMobile ? 0.22 : 0.18;
       let animateDetailsIn = () => {};
       let animateDetailsOut = () => {};
       const getDetailsOffsetX = () => Math.round(window.innerWidth * 1.1);
@@ -222,7 +220,6 @@ const Contact = () => {
         deactivateEndState = () => {
           if (!isEndStateActive) return;
           isEndStateActive = false;
-          animateDetailsOut();
           section.classList.remove("scrolled");
           if (isLightRef.current) {
             dispatch(switchThemeMode());
@@ -344,39 +341,12 @@ const Contact = () => {
           }
         };
 
-        const isDetailsInRevealZone = () => {
-          const detailsRect = detailsScroll.getBoundingClientRect();
-          const revealThresholdPx = (window.innerHeight * detailsRevealStartPercent) / 100;
-          return detailsRect.top <= revealThresholdPx && detailsRect.bottom > 0;
-        };
-        const shouldHideDetailsOnBackScroll = (scrollState) => {
-          if (!scrollState || scrollState.direction >= 0) return false;
-          const velocity = typeof scrollState.getVelocity === "function" ? scrollState.getVelocity() : 0;
-          const isActualUpwardScroll = velocity < -10;
-          return isActualUpwardScroll && scrollState.progress <= detailsHideBackProgress;
-        };
-
         ScrollTrigger.create({
           trigger: detailsScroll,
           start: `top ${detailsRevealStartPercent}%`,
           end: "bottom top",
           onEnter: animateDetailsIn,
-          onEnterBack: (self) => {
-            if (!shouldHideDetailsOnBackScroll(self) && isDetailsInRevealZone()) {
-              animateDetailsIn();
-              return;
-            }
-            animateDetailsOut();
-          },
-          onUpdate: (self) => {
-            if (self.direction >= 0 && isDetailsInRevealZone()) {
-              animateDetailsIn();
-              return;
-            }
-            if (shouldHideDetailsOnBackScroll(self)) {
-              animateDetailsOut();
-            }
-          },
+          onEnterBack: animateDetailsIn,
           onLeaveBack: animateDetailsOut,
         });
 
@@ -391,20 +361,6 @@ const Contact = () => {
         if (detailsRect.top <= revealThresholdPx && detailsRect.bottom > 0) {
           activateEndState();
         }
-      }
-
-      /* ---- smiley parallax ---- */
-      if (smileyRef.current) {
-        gsap.to(smileyRef.current, {
-          x: isMobile ? -60 : -200,
-          ease: "none",
-          scrollTrigger: {
-            trigger: smileyRef.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: true,
-          },
-        });
       }
 
     }, section);
@@ -463,7 +419,7 @@ const Contact = () => {
               SAY<i> HI.</i>
             </a>
           </div>
-          <div ref={smileyRef} className="smileyFace-row-wrapper">
+          <div className="smileyFace-row-wrapper">
             <div className="smileyFace-wrapper">
               <div className="smileyFace">
                 <div className="left-eye"></div>

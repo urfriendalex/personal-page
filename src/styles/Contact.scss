@@ -6,7 +6,7 @@
     content: "";
     background-image: url("../img/noise02.png");
     position: fixed;
-    height: var(--visible-vh);
+    height: var(--full-vh);
     width: 100%;
     top: 0;
     left: 0;
@@ -26,7 +26,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    height: var(--visible-vh);
+    height: var(--full-vh);
     width: 100%;
     z-index: 0;
     overflow: hidden;
@@ -95,7 +95,7 @@
     position: absolute;
     top: calc(var(--full-vh) * 2.85);
     opacity: 0;
-    height: var(--visible-vh);
+    height: var(--full-vh);
     width: 100%;
     visibility: hidden;
     z-index: 2;
@@ -106,7 +106,7 @@
       flex-direction: column;
       width: 90%;
       margin: 0 auto;
-      min-height: var(--visible-vh);
+      min-height: var(--full-vh);
       box-sizing: border-box;
       position: relative;
       z-index: 3;
