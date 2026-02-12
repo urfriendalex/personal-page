@@ -19,10 +19,6 @@ const MOBILE_SKIP_SNAP_MS = 700;
 const MOBILE_ENTRY_SETTLE_MS = 80;
 const MOBILE_WHEEL_DELTA_THRESHOLD = 8;
 const MOBILE_TOUCH_SWIPE_THRESHOLD = 10;
-const MOBILE_RECOVER_DRIFT_THRESHOLD = 0.14;
-const MOBILE_RECOVER_DRIFT_THRESHOLD_BROKEN = 0.04;
-const MOBILE_RECOVER_COOLDOWN_MS = 420;
-const MOBILE_IDLE_RECOVER_DELAY_MS = 220;
 const MOBILE_CAPTURE_BUFFER_VH = 0.4;
 const smoothStepEase = t => 1 - Math.pow(1 - t, 4);
 const getViewportHeight = (sectionEl) =>
@@ -89,7 +85,12 @@ const Project = ({
     <li className={`project-wrapper project-${index + 1}`}>
       <div className="project-links">
         {partial ? (
-          <a className="link secondary link-wavy" href={partial} target="blank">
+          <a
+            className="link secondary link-wavy"
+            href={partial}
+            target="_blank"
+            rel="noreferrer"
+          >
             <span>view partial</span>
             <svg
               className="link__graphic link__graphic--slide"
@@ -105,7 +106,7 @@ const Project = ({
           <div className="link-placeholder"></div>
         )}
         {site && (
-          <a className="link link-wavy" href={site} target="blank">
+          <a className="link link-wavy" href={site} target="_blank" rel="noreferrer">
             <span>visit site</span>
             <svg
               className="link__graphic link__graphic--slide"
@@ -119,17 +120,14 @@ const Project = ({
           </a>
         )}
       </div>
-      <div
-        className="project-banner"
-        style={{ backgroundImage: `url(${bannerImg})` }}
-      ></div>
+      <div className="project-banner" style={{ backgroundImage: `url(${bannerImg})` }} />
       <div className="project-info">
         <div className="project-title" style={{ color: primaryColor }}>
           {splitToSpans(title, "")}
         </div>
         <div className="project-meta">
           <div className="project-description">
-            {splitToSpans(description, "/n")}
+            {splitToSpans(description, "\n")}
           </div>
           <div className="project-year">
             <span>{year}</span>
@@ -500,6 +498,7 @@ const Projects = () => {
           projectEls.length
         );
         const target = st.start + progress * (st.end - st.start);
+        skipSnapUntilRef.current = Date.now() + MOBILE_SKIP_SNAP_MS;
         if (scrollProxy?.scrollTo) {
           scrollProxy.scrollTo(target, {
             duration,
@@ -521,6 +520,7 @@ const Projects = () => {
           ? st.end + viewportHeight * 0.7
           : st.start - viewportHeight * 0.6;
         setInteractionLock(false);
+        skipSnapUntilRef.current = Date.now() + MOBILE_SKIP_SNAP_MS;
         if (scrollProxy?.scrollTo) {
           scrollProxy.scrollTo(target, {
             duration: MOBILE_EXIT_SCROLL_DURATION,
@@ -574,6 +574,21 @@ const Projects = () => {
         // Let the current gesture pass through to native/Lenis scrolling.
         boundaryReleaseUntilTs = Date.now() + 950;
         lockedUntilTs = 0;
+      };
+
+      const progressToMobileStep = (progress) => {
+        const { titleFrac, projectEndFrac } = metrics;
+        if (progress <= titleFrac * 0.5) return 0;
+        if (progress <= titleFrac) return 1;
+        if (progress >= projectEndFrac) return projectEls.length;
+        return (
+          progressToNearestProjectIndex(
+            progress,
+            titleFrac,
+            projectEndFrac,
+            projectEls.length
+          ) + 1
+        );
       };
 
       const handleWheel = event => {
@@ -646,6 +661,7 @@ const Projects = () => {
           onEnter: () => {
             setControlsVisible(true);
             setInteractionLock(true);
+            skipSnapUntilRef.current = Date.now() + MOBILE_ENTRY_SETTLE_MS;
             if (activeStepRef.current < 0 || activeStepRef.current > projectEls.length) {
               setStep(0);
               applyRevealState(0);
@@ -663,7 +679,25 @@ const Projects = () => {
             setControlsVisible(false);
             setInteractionLock(false);
           },
-          snap: false,
+          snap: {
+            snapTo(progress) {
+              if (Date.now() < skipSnapUntilRef.current) return progress;
+              if (Date.now() < boundaryReleaseUntilTs) return progress;
+              const targetStep = progressToMobileStep(progress);
+              snapStepRef.current = targetStep;
+              return stepToProgress(
+                targetStep,
+                metrics.titleFrac,
+                metrics.projectEndFrac,
+                projectEls.length
+              );
+            },
+            duration: { min: 0.08, max: 0.2 },
+            delay: 0.02,
+            ease: "power2.out",
+            directional: true,
+            inertia: false,
+          },
           onUpdate(self) {
             const progress = self.progress;
             const { titleFrac, projectEndFrac } = metrics;
@@ -689,6 +723,7 @@ const Projects = () => {
       snapStepRef.current = 0;
       setStep(0);
       applyRevealState(0);
+      skipSnapUntilRef.current = Date.now() + MOBILE_ENTRY_SETTLE_MS;
 
       tl.to(titleEl, {
         yPercent: -120,
@@ -762,7 +797,7 @@ const Projects = () => {
       </div>
       <ul ref={containerRef} className="projects-container">
         {projects.map((proj, index) => (
-          <Project key={index} info={proj} index={index} />
+          <Project key={proj.title} info={proj} index={index} />
         ))}
       </ul>
       {controlsVisible && (

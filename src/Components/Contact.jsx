@@ -48,8 +48,11 @@ const Contact = () => {
       let deactivateEndState = () => {};
       const detailsScroll = section.querySelector("#contact-details-scroll");
       const detailsWrapper = section.querySelector(".contact-details-wrapper");
-      const detailsRevealStartPercent = isMobile ? 84 : 90;
-      const detailsHideBackStartPercent = isMobile ? 52 : 64;
+      const detailsRevealStartPercent = isMobile ? 50 : 60;
+      const detailsHideBackPercent = Math.max(
+        isMobile ? 30 : 40,
+        detailsRevealStartPercent - (isMobile ? 16 : 14)
+      );
       let animateDetailsIn = () => {};
       let animateDetailsOut = () => {};
       const getDetailsOffsetX = () => Math.round(window.innerWidth * 1.1);
@@ -122,7 +125,7 @@ const Contact = () => {
         };
         stickyTopGetters[i] = getStickyTopPx;
         const marqueeDirection = i % 2 === 0 ? -1 : 1;
-        const isEndStateTitle = i === 0; // section-titlte-scroll-1 is the line visible at the end state
+        const isEndStateTitle = i === 0; // section-title-scroll-1 is the line visible at the end state
         if (isEndStateTitle) {
           endStateLine = line;
         }
@@ -265,10 +268,20 @@ const Contact = () => {
           end: "bottom bottom",
           pin: detailsWrapper,
           pinSpacing: false,
+          onEnter: () => {
+            activateEndState();
+          },
+          onEnterBack: () => {
+            activateEndState();
+          },
+          onLeaveBack: () => {
+            deactivateEndState();
+          },
         });
       }
 
       if (detailsScroll && (mailWrapperRef.current || socialsRef.current)) {
+        let areDetailsVisible = false;
         const getFromState = () => {
           const offsetX = getDetailsOffsetX();
           return {
@@ -287,6 +300,8 @@ const Contact = () => {
         }
 
         animateDetailsIn = () => {
+          if (areDetailsVisible) return;
+          areDetailsVisible = true;
           if (mailWrapperRef.current) {
             gsap.to(mailWrapperRef.current, {
               x: 0,
@@ -308,6 +323,8 @@ const Contact = () => {
         };
 
         animateDetailsOut = () => {
+          if (!areDetailsVisible) return;
+          areDetailsVisible = false;
           const { mailX, socialsX } = getFromState();
 
           if (mailWrapperRef.current) {
@@ -330,25 +347,39 @@ const Contact = () => {
           }
         };
 
+        const isDetailsInRevealZone = () => {
+          const detailsRect = detailsScroll.getBoundingClientRect();
+          const revealThresholdPx = (window.innerHeight * detailsRevealStartPercent) / 100;
+          return detailsRect.top <= revealThresholdPx && detailsRect.bottom > 0;
+        };
+        const shouldHideDetailsOnBackScroll = () => {
+          const detailsRect = detailsScroll.getBoundingClientRect();
+          const hideThresholdPx = (window.innerHeight * detailsHideBackPercent) / 100;
+          return detailsRect.top > hideThresholdPx || detailsRect.bottom <= 0;
+        };
+
         ScrollTrigger.create({
           trigger: detailsScroll,
           start: `top ${detailsRevealStartPercent}%`,
           end: "bottom top",
-          onEnter: () => {
-            activateEndState();
-          },
+          onEnter: animateDetailsIn,
           onEnterBack: () => {
-            activateEndState();
+            if (!shouldHideDetailsOnBackScroll() && isDetailsInRevealZone()) {
+              animateDetailsIn();
+              return;
+            }
+            animateDetailsOut();
           },
-        });
-
-        ScrollTrigger.create({
-          trigger: detailsScroll,
-          start: `top ${detailsHideBackStartPercent}%`,
-          end: "bottom top",
-          onLeaveBack: () => {
-            deactivateEndState();
+          onUpdate: (self) => {
+            if (self.direction >= 0 && isDetailsInRevealZone()) {
+              animateDetailsIn();
+              return;
+            }
+            if (self.direction < 0 && shouldHideDetailsOnBackScroll()) {
+              animateDetailsOut();
+            }
           },
+          onLeaveBack: animateDetailsOut,
         });
 
         if (section.classList.contains("scrolled")) {
@@ -411,7 +442,7 @@ const Contact = () => {
       {[1, 2, 3, 4, 5].map((number) => (
         <div
           key={number}
-          id={`section-titlte-scroll-${number}`}
+          id={`section-title-scroll-${number}`}
           className={`section-title${number === 1 ? " is-primary" : ""}`}
         >
           <div className="line">
@@ -474,9 +505,11 @@ const Contact = () => {
           </div>
         </div>
         <div className="bg-changer">
-          <div
+          <button
+            type="button"
             className="btn link link-wavy"
             onClick={() => dispatch(switchBgVersion())}
+            aria-label="Switch background version"
           >
             <span>click</span>
             <svg
@@ -488,7 +521,7 @@ const Contact = () => {
             >
               <path d="M0,56.5c0,0,298.666,0,399.333,0C448.336,56.5,513.994,46,597,46c77.327,0,135,10.5,200.999,10.5c95.996,0,402.001,0,402.001,0"></path>
             </svg>
-          </div>
+          </button>
         </div>
       </div>
       {[1, 2, 3].map((item) => (
