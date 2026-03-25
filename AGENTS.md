@@ -12,9 +12,9 @@ npm run dev
 
 Serves on `http://localhost:5173` by default. Add `-- --host 0.0.0.0` to expose on all interfaces.
 
-### Known issue: case-sensitive imports
+### Case-sensitive imports
 
-The `src/Components/` directory uses a capital `C`, but import paths in source files (e.g. `src/App.jsx`, `src/Components/Landing.jsx`) reference `./components/` with a lowercase `c`. This works on macOS/Windows (case-insensitive FS) and in Vite dev mode, but **`vite build` fails on Linux** with `Could not resolve "./components/..."`. The dev server still works fine for development.
+The `src/Components/` directory uses a capital `C`. All import paths must match this casing exactly (e.g. `./Components/Landing`, not `./components/Landing`), since Linux is case-sensitive. If you add new imports referencing files in this directory, use the capital `C`.
 
 ### No lint or test commands
 
