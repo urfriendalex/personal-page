@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./styles/App.scss";
-import Landing from "./components/Landing";
+import Landing from "./Components/Landing";
 import { useSelector } from "react-redux";
-import CustomCursor from "./components/CustomCursor";
+import CustomCursor from "./Components/CustomCursor";
 
 export default function App() {
   const [isPageReady, setIsPageReady] = useState(false);

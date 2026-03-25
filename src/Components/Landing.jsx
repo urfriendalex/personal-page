@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import Header from "./Header";
 import Hero from "./Hero";
 import Navigation from "./Navigation";
-import Projects from "../components/Projects";
-import Contact from "../components/Contact";
+import Projects from "../Components/Projects";
+import Contact from "../Components/Contact";
 import useLocoScroll from "./hooks/useLocoScroll";
 
 const Landing = () => {
