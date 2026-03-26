@@ -463,6 +463,9 @@ const Contact = () => {
             </div>
           </div>
         </div>
+        <div className="copyright">
+          <span>© 2020 Alexander Yansons — Portfolio v1</span>
+        </div>
         <div className="bg-changer">
           <button
             type="button"

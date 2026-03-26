@@ -81,7 +81,8 @@
       visibility: visible;
       transition: 0.24s 0.12s opacity ease, 0s 0.12s visibility ease;
 
-      .bg-changer {
+      .bg-changer,
+      .copyright {
         opacity: 1;
         visibility: visible;
         transform: translateY(0);
@@ -243,6 +244,26 @@
             }
           }
         }
+      }
+    }
+
+    .copyright {
+      position: fixed;
+      left: 3%;
+      bottom: 3dvh;
+      z-index: 4;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(2rem);
+      pointer-events: none;
+      transition: 0.25s opacity ease, 0.25s transform ease, 0s 0.25s visibility ease;
+      font-size: 0.75rem;
+      color: var(--color-light);
+      letter-spacing: 0.02em;
+
+      @media (max-width: 768px) {
+        font-size: 0.65rem;
+        bottom: calc(env(safe-area-inset-bottom, 0rem) + 3dvh);
       }
     }
 
