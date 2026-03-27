@@ -7,6 +7,10 @@ jobs:
   deploy-preview:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN || secrets.VERCEL_ACCESS_TOKEN || vars.VERCEL_TOKEN || vars.VERCEL_ACCESS_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || vars.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -17,12 +21,16 @@ jobs:
 
       - run: npm ci
 
+      - name: Validate Vercel credentials
+        run: |
+          if [ -z "${VERCEL_TOKEN}" ] || [ -z "${VERCEL_ORG_ID}" ] || [ -z "${VERCEL_PROJECT_ID}" ]; then
+            echo "::error::Missing Vercel credentials. Set VERCEL_TOKEN (or VERCEL_ACCESS_TOKEN), VERCEL_ORG_ID, and VERCEL_PROJECT_ID as GitHub Actions secrets or repository variables."
+            exit 1
+          fi
+
       - name: Deploy Preview to Vercel
         run: |
           npm i -g vercel@latest
-          vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-          vercel build --token=${{ secrets.VERCEL_TOKEN }}
-          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel pull --yes --environment=preview --token="${VERCEL_TOKEN}"
+          vercel build --token="${VERCEL_TOKEN}"
+          vercel deploy --prebuilt --token="${VERCEL_TOKEN}"
