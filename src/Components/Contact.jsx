@@ -463,10 +463,11 @@ const Contact = () => {
             </div>
           </div>
         </div>
-        <div className="bg-changer">
+        <div className="contact-footer">
+          <span className="copyright">© 2020 Alexander Yansons — Portfolio v1</span>
           <button
             type="button"
-            className="btn link link-wavy"
+            className="btn link link-wavy bg-changer-btn"
             onClick={() => dispatch(switchBgVersion())}
             aria-label="Switch background version"
           >
